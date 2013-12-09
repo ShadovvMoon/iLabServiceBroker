@@ -1,0 +1,30 @@
+extends layout
+block content
+	div.container
+		div.row
+			div.span12
+				form(method='post', action='/server')
+					legend iLab Server
+					p Select an experiment from the list below.
+					
+					div.form-actions
+						select(name='Experiments', id="experiment", style="margin-bottom:0px;")
+							option(value='RadioactivityLab')
+								p RadioactivityLab
+						| &nbsp;
+						input.btn.btn-primary(value='Run Experiment', type='submit')
+						| &nbsp;
+						input.btn.btn-primary(value='Show Configuration', type='submit')
+		hr
+		div.row
+			div.span12
+				div.progress.progress-striped.active.hide
+					div.bar(style='width: 10%')
+		div.row
+			div.span12
+				div.alert.hide
+					button.close(type='button', data-dismiss='alert') x
+					span
+						strong.message
+					span
+						normal.text

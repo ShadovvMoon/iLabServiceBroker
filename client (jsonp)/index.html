@@ -1,0 +1,31 @@
+<html>
+<head>
+    <title>jsonp test</title>
+    <script src="http://code.jquery.com/jquery-1.6.2.min.js"></script>      
+    <script type="text/javascript">
+        $(function(){               
+            $('#select_link').click(function(e){
+                e.preventDefault();
+                console.log('select_link clicked');
+
+                function test(data){
+                    return {"message":"ok"};
+                }
+
+                 $.ajax({
+                    dataType: 'jsonp',
+                    data: "action=getBrokerInfo",                      
+                    jsonp: 'callback',
+                    url: 'http://localhost:8080/jsonp?callback=?',                     
+                    success: function(data) {
+                        console.log('success');
+                        console.log(JSON.stringify(data));
+                    }
+                });
+            });             
+        });
+    </script>
+</head>
+<body>
+    <div id="select_div"><a href="#" id="select_link">Test</a></div>    
+</body>

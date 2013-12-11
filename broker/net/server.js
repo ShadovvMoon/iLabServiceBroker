@@ -24,6 +24,7 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+var root = module.exports;
 var http = require("http");
 var soap = require("./soap");
 var ilab = require("./ilab");
@@ -31,11 +32,22 @@ var config = require('../config')
 
 var express = require('express');
 var path = require('path');
-
 var app = express();
+
+var plugin_list = {};
+var lab_list 	= {};
 
 function start()
 {
+	//Start message
+	//-------------------------------
+	console.log("");
+	console.log("iLab Service");
+	console.log("Version: 1.0");
+	console.log("  Build: 4");
+	console.log("   Date: 12/12/2013");
+	console.log("");
+
 	//Initilisation functions
 	//-------------------------------
 	app.configure(function(){
@@ -51,6 +63,23 @@ function start()
 	app.configure('development', function(){
 		app.use(express.errorHandler());
 	});
+
+	//Initialise auth plugins
+	//-------------------------------
+	console.log("Loading authentication...");
+	var k = 0;
+	for (k=0; k < config.auth_plugins.length; k++)
+	{
+		var dict = config.auth_plugins[k];
+		var plug = require("./auth/" + dict.file);
+		
+		plug.createAuth(app, root);
+		plugin_list[dict.name] = plug;
+	
+		console.log("Loaded " + dict.name);
+	}
+	console.log("");
+
 
 	//Check out IMS Global for Auth stuff
 	//Communication with clients using JSON
@@ -86,61 +115,113 @@ function start()
 		{
 			sendReplyToClient(client, {vendor:config.vendor});
 		}
+		else if (json.action == "getLabList")
+		{
+			var labList = [];
+			for (var n=0; n < config.servers.length; n++)
+			{
+				labList.push(config.servers[n].id);
+			}
+			sendReplyToClient(client, labList);
+		}
 		else if (json.action == "getLabConfiguration")
 		{
-			lab_server.getLabConfiguration(function(obj, err)
+			var selected_server = lab_list[json['id']];
+			if (selected_server)
 			{
-				sendReplyToClient(client, obj);
-			});
+				selected_server.getLabConfiguration(function(obj, err)
+				{
+					sendReplyToClient(client, obj);
+				});
+			}
+			else
+			{
+				console.log("Missing server");
+			}
+		}
+		else if (json.action == "getLabStatus")
+		{
+			var selected_server = lab_list[json['id']];
+			if (selected_server)
+			{
+				selected_server.getLabStatus(function(obj, err)
+				{
+					sendReplyToClient(client, obj);
+				});
+			}
+		}
+		else if (json.action == "getEffectiveQueueLength")
+		{
+			var selected_server = lab_list[json['id']];
+			if (selected_server)
+			{
+				selected_server.getEffectiveQueueLength('default', 0, function(obj, err)
+				{
+					sendReplyToClient(client, obj);
+				});
+			}
 		}
 	}
 
-	//Listener for JSONP
-	app.get('/jsonp', function(req, res)
+	//Show an information page
+	app.get('/', function(req, res)
 	{
-		receiveDataFromClient({
-			request:req,
-			response:res,
-			json:req.query,
-			type:'jsonp'
-		});
-	});
-
-	//Listener for JSON
-	app.post('/', function(req, res)
-	{	
-		receiveDataFromClient({
-			request:req,
-			response:res,
-			json: req.body,
-			type:'json'
-			});
+		res.writeHead(200, {'Content-Type': 'text/plain'});
+	    res.write("iLab Broker Service - 1.0");
+	    res.end();
 	});
 
 	//Server creation
 	//-------------------------------
 	http.createServer(app).listen(app.get('port'), function(){
-		console.log("Express server listening on port " + app.get('port'));
+		if (config.verbose) console.log("Express server listening on port " + app.get('port'));
 	});
 
 	//Connection to Lab Servers
 	//-------------------------------
+
+	//Connect in order (to avoid overlap issues)
+	var current_server_number = 0;
+	function nextServer()
+	{
+		if (current_server_number < config.servers.length)
+		{
+			var server_data = config.servers[current_server_number];
+			var lab_server = new ilab.iLabServer(server_data, function() {
+				lab_server.getLabStatus(function(xml, err){
+					if (err)
+						console.log(err);
+					else
+						console.log("Status " + xml);
+
+					current_server_number++;
+					nextServer();
+				});
+			});
+			lab_list[server_data.id] = lab_server;
+		}
+	}
+
+	nextServer();
+		
+/*
 	var i;
 	for (i=0; i < config.servers.length; i++)
 	{
 		var server_data = config.servers[i];
+		var ilab = require("./ilab");
+
 		var lab_server = ilab.connectTo(server_data, function() {
+			lab_server.getLabStatus(function(xml, err){
+				if (err)
+					console.log(err);
+				else
+					console.log("Status " + xml);
+			});
 		});
-
+		lab_list[server_data.id] = lab_server;
 	}
-
-	//Start message
-	//-------------------------------
-	console.log("iLab jsnode server running");
-	console.log("----------------------");
-	console.log("Version: 1.0");
-	console.log("  Build: 2");
-	console.log("   Date: 9/12/2013");
-	console.log("----------------------");
+*/
+	root.receiveDataFromClient = receiveDataFromClient;
 }
 exports.start = start;

@@ -24,41 +24,59 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-(function () {
-    var root     = module.exports;
+(function()
+{
+    var root = module.exports;
 	var soap   = require('./soap');
 	var config = require('../config')
 	var parseString = require('xml2js').parseString;
 
-	/*console.log("LAB: Header Keys "	 + Object.keys(header));
-			console.log("LAB: Info Keys"	 + Object.keys(data));
-			console.log("LAB: Faultstring " + data['faultstring']);
-			console.log("LAB: " + data['labStatusMessage']);
-			*/
-/*root.soap_connection.call
-		({
-	        'method' : 'GetLabStatus',
-	        'params' : {
-	            'test' : 1
-	        }
-	    });*/
-
 	//Print out the accepted SOAP methods
-	function printMethods()
+	function iLabServer(params, callback)
 	{
-		console.log("LAB: " + root.soap_connection.getAllFunctions());
+		//Connect to the iLab
+		if (config.verbose) console.log("Connecting to iLab " + params.host);
+		if (config.debug) console.log(params.host + '/'+params.server+'/'+params.service);
+
+		//Connect to the SOAP
+		var soap_connection = soap.createConnection(
+						params.host, //Host name
+						params.port, //Port
+						'/'+params.server+'/'+params.service,
+						'/'+params.server+'/'+params.service+'?wsdl', //Wsdl file
+						params.guid,
+						params.passkey); 
+	
+		//Create the functions to handle replies
+		console.log("SOAP: Connecting (" + params.host+")");
+	
+		soap_connection.once('initialized', function()
+		{
+			console.log("SOAP: Connected  (" + params.host+")");
+		   	callback();
+		});
+	
+		soap_connection.init();
+
+		this.host = params.host;
+		this.soap_connection = soap_connection;
+
+		return this;
+	}
+
+	iLabServer.prototype.printMethods = function (){
+		console.log("LAB: " + this.soap_connection.getAllFunctions());
 	}
 	
 	//Returns the queue length for the lab server. 
 	//Arguments: userGroup, priority (from -20 to 20), function(length, wait, err)
-	function getEffectiveQueueLength(userGroup, priorityHint, callback)
-	{
+	iLabServer.prototype.getEffectiveQueueLength = function (userGroup, priorityHint, callback) {
 		if (config.verbose) console.log("LAB: GetEffectiveQueueLength");
-		root.soap_connection.once('GetEffectiveQueueLength', function(err, data, header)
+		this.soap_connection.once('GetEffectiveQueueLength', function(err, data, header)
 		{
-			callback(data['effectiveQueueLength'], data['estWait'], data['faultstring']);
+			callback(data, data['faultstring']);
 	    });
-	    root.soap_connection.call
+	    this.soap_connection.call
 		({
 	        'method' : 'GetEffectiveQueueLength',
 			'params' : {'userGroup': userGroup,
@@ -68,17 +86,17 @@
 
 	//Returns the lab configuration in xml format.
 	//Arguments: function(xml, err)
-	function getLabConfiguration(callback)
-	{
-		if (config.verbose) console.log("LAB: GetLabConfiguration");
-		root.soap_connection.once('GetLabConfiguration', function(err, data, header)
+	iLabServer.prototype.getLabConfiguration = function getLabConfiguration(callback) {
+		if (config.verbose) console.log("LAB: GetLabConfiguration " + this.host);
+		this.soap_connection.once('GetLabConfiguration', function(err, data, header)
 		{
+			console.log("Response");
 			parseString(data['GetLabConfigurationResult'], {trim: true}, function (err, result)
 			{
 				callback(result, data['faultstring']);
 			});
 	    });
-	    root.soap_connection.call
+	    this.soap_connection.call
 		({
 	        'method' : 'GetLabConfiguration',
 	    });
@@ -86,51 +104,20 @@
 
 	//Returns the lab status.
 	//Arguments: function(message, keys, err)
-	function getLabStatus(callback)
-	{
+	iLabServer.prototype.getLabStatus = function (callback) {
 		if (config.verbose) console.log("LAB: GetLabStatus");
-		root.soap_connection.once('GetLabStatus', function(err, data, header)
+		this.soap_connection.once('GetLabStatus', function(err, data, header)
 		{
-			callback(data['labStatusMessage'], data['Keysonline'], data['faultstring']);
+			callback(data, data['faultstring']);
 	    });
-	    root.soap_connection.call
+	    this.soap_connection.call
 		({
 	        'method' : 'GetLabStatus',
 	    });
 	}
 	
-	function connectTo(params, callback)
-	{
-		//Connect to the iLab
-		if (config.verbose) console.log("Connecting to iLab " + params.host);
-	
-		//Connect to the SOAP
-		var soap_connection = soap.createConnection(
-						params.host, //Host name
-						params.port, //Port
-						'/'+params.server+'/LabServerWebService',
-						'/'+params.server+'/LabServerWebService?wsdl', //Wsdl file
-						params.guid,
-						params.passkey); 
-	
-		//Create the functions to handle replies
-		if (config.verbose) console.log("SOAP: Connecting");
-	
-		soap_connection.once('initialized', function()
-		{
-			if (config.verbose) console.log("SOAP: Connected");
-		   	callback();
-		});
-	
-		soap_connection.init();
-		root.soap_connection = soap_connection;
 
-		return root
-	}
-	
-	root.connectTo = connectTo;
-	root.printMethods = printMethods;
-	root.getLabStatus = getLabStatus;
-	root.getEffectiveQueueLength = getEffectiveQueueLength;
-	root.getLabConfiguration = getLabConfiguration;
+	root.iLabServer = iLabServer;
+
+	return root;
 })();

@@ -1,31 +1,216 @@
 <html>
 <head>
-    <title>jsonp test</title>
-    <script src="http://code.jquery.com/jquery-1.6.2.min.js"></script>      
+    <title>jsonp test</title> 
+	<link href="http://www.samuco.net/ceit/public/stylesheets/bootstrap.min.css" rel="stylesheet" type="text/css">
+	<link href="http://www.samuco.net/ceit/public/stylesheets/style.css" rel="stylesheet" type="text/css"> 
+	<script src="http://code.jquery.com/jquery-1.9.1.min.js"></script>
+
     <script type="text/javascript">
-        $(function(){               
-            $('#select_link').click(function(e){
-                e.preventDefault();
-                console.log('select_link clicked');
-
-                function test(data){
-                    return {"message":"ok"};
-                }
-
-                 $.ajax({
+		//------------------------------------------------------------------------------------------------
+		//Methods to interact with the nodejs service broker.
+		var broker = {
+			host: "localhost",
+			port: 8080
+		};
+		//------------------------------------------------------------------------------------------------
+		//call_func = function(data)
+		//data keys: "vendor"
+		function getBrokerInfo(call_func)
+		{
+			$.ajax({
                     dataType: 'jsonp',
                     data: "action=getBrokerInfo",                      
                     jsonp: 'callback',
-                    url: 'http://localhost:8080/jsonp?callback=?',                     
-                    success: function(data) {
-                        console.log('success');
-                        console.log(JSON.stringify(data));
-                    }
-                });
-            });             
-        });
+                    url: 'http://'+ broker.host + ":"+ broker.port+'/noauth-jsonp?callback=?',                     
+                    success: function callback(data) {
+						call_func(data);
+					}
+               	});
+		}	
+		//call_func = function(data)
+		//data is an a array with lab identifiers
+		function getLabList(call_func)
+		{
+			$.ajax({
+                    dataType: 'jsonp',
+                    data: "action=getLabList",                      
+                    jsonp: 'callback',
+                    url: 'http://'+ broker.host + ":"+ broker.port+'/noauth-jsonp?callback=?',                     
+                    success: function callback(data) {
+						call_func(data);
+					}
+               	});
+		}
+		function getLabConfiguration(lab_id, call_func)
+		{
+			$.ajax({
+                    dataType: 'jsonp',
+                    data: "action=getLabConfiguration&id="+lab_id,                      
+                    jsonp: 'callback',
+                    url: 'http://'+ broker.host + ":"+ broker.port+'/noauth-jsonp?callback=?',                     
+                    success: function callback(data) {
+						call_func(data);
+					}
+               	});
+		}
+		function getLabStatus(lab_id, call_func)
+		{
+			$.ajax({
+                    dataType: 'jsonp',
+                    data: "action=getLabStatus&id="+lab_id,                      
+                    jsonp: 'callback',
+                    url: 'http://'+ broker.host + ":"+ broker.port+'/noauth-jsonp?callback=?',                     
+                    success: function callback(data) {
+						call_func(data);
+					}
+               	});
+		}
+		function getEffectiveQueueLength(lab_id, call_func)
+		{
+			$.ajax({
+                    dataType: 'jsonp',
+                    data: "action=getEffectiveQueueLength&id="+lab_id,                      
+                    jsonp: 'callback',
+                    url: 'http://'+ broker.host + ":"+ broker.port+'/noauth-jsonp?callback=?',                     
+                    success: function callback(data) {
+						call_func(data);
+					}
+               	});
+		}
+		//------------------------------------------------------------------------------------------------
+		getBrokerInfo(function(data)
+		{
+			getLabList(function(labs)
+			{
+				document.getElementById("page-name").innerHTML = data["vendor"];
+
+				var choices_html = "";
+				for (var i=0; i < labs.length; i++)
+				{
+					var lab_id = labs[i];
+					choices_html+="<option value=\"" + lab_id + "\">" + lab_id + "</option>"
+				}
+
+				document.getElementById("experiment-list").innerHTML = choices_html;
+			});
+		});
+		//------------------------------------------------------------------------------------------------
+		function requestConfiguration()
+		{
+			//Which option is selected?
+			var lab_id = document.getElementById("experiment-list").value;
+
+			getLabConfiguration(lab_id, function(configuration)
+			{
+				getLabStatus(lab_id, function(status)
+				{
+					getEffectiveQueueLength(lab_id, function(queue)
+					{
+						var labConfig = configuration['labConfiguration'];
+						var labName = labConfig['$']['title'];
+				
+						var textHtml = "<br/>";
+
+						//Add any photos for the laboritory
+						var labCamera = labConfig['navmenuPhoto'];
+						for (var i = 0; i < labCamera.length; i++)
+						{
+							var urls = labCamera[i]['image'];
+							for (var a = 0; a < urls.length; a++)
+							{
+								textHtml+= "<img src=\""+ urls[a]+"\"/> ";
+							}
+						}
+						textHtml+= "<br/>";
+						textHtml+= "<br/>";
+				
+						//Add any lab camera links
+						var labCamera = labConfig['labCamera'];
+						for (var i = 0; i < labCamera.length; i++)
+						{
+							var hasLink = false; 
+							var urls = labCamera[i]['url'];
+							for (var a = 0; a < urls.length; a++)
+							{
+								if (urls[a] != "")
+								{
+									if (!hasLink)
+									{
+										textHtml+= "Live camera " + (i+1) + ": ";
+									}
+					
+									textHtml+= "<a href=\""+ urls[a]+"\">link</a> ";
+									hasLink = true;
+								}
+							}
+				
+							if (hasLink)
+							{
+								textHtml+= "<br/>";
+							}
+						}
+				
+						//Add status messages
+						console.log(configuration);
+						textHtml+= "<p><b>Queue</b><br/>Size: "+queue["effectiveQueueLength"]+"<br/>Wait: "+queue["estWait"]+"</p>";
+						textHtml+= "<p><b>Status</b><br/>"+ status["labStatusMessage"]+"</p>";
+				
+
+	
+						$('div.progress').hide();
+				    	$('strong.message').text(labName);
+						$('normal.text').html(textHtml);
+				    	$('div.alert').show();
+
+					});
+				});
+			});
+
+			console.log(lab_id);
+		}
     </script>
 </head>
 <body>
-    <div id="select_div"><a href="#" id="select_link">Test</a></div>    
+	<div class="container">
+		<div class="row">
+			<div class="span12">
+				<!--<form method="post" action="#select_link" style="margin:0 0 0px">-->
+					<legend id="page-name"></legend><p>Select an experiment from the list below.</p>
+					<div style="margin-bottom:0px" class="form-actions">
+						<select id="experiment-list" name="Experiments" id="experiment" style="margin-bottom:0px;">
+						</select>
+
+						&nbsp;
+						<button onclick="requestConfiguration()" type="submit" value="Show Configuration" class="btn btn-primary">Load Experiment</button>
+					</div>
+				<!--</form>-->
+			</div>
+		</div>
+	<hr>
+	<div class="row">
+		<div class="span12">
+			<div class="alert hide" style="height:400px">
+				<button type="button" data-dismiss="alert" class="close">x</button>
+				
+				<div style="float: left; width: 200px; background-color:#fdfcf5" >
+					<span>
+						<font size="4"><strong class="message"></strong></font>
+					</span>
+					<span>
+						<normal class="text"></normal>
+					</span>
+				</div>
+				<div style="float: left; width: 30px;" >&nbsp;</div>
+				<div style="float: left; width: 60%;">
+					<span>
+						<font size="4"><strong>Configuration</strong></font>
+					</span>
+				</div>
+		</div>
+	</div>
+	
+	<script src="http://code.jquery.com/jquery-1.9.1.min.js"></script>
+         
+	<script src="http://www.samuco.net/ceit/public/javascripts/bootstrap.min.js"></script>     
+	<script src="http://www.samuco.net/ceit/public/javascripts/script.js"></script>  
 </body>

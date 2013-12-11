@@ -24,36 +24,41 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+var sys = require('sys');
+var config = require('../../config');
 
-var config = {}
-module.exports = config;
-config.servers = [];
-//-----------------------------
+(function () {
+    var root = module.exports;
+	function createAuth(app, server)
+	{
+		//Listener for JSONP
+		app.get('/noauth-jsonp', function(req, res)
+		{
+			console.log("No authentication (jsonp)");
+			server.receiveDataFromClient({
+				request:req,
+				response:res,
+				json:req.query,
+				type:'jsonp'
+			});
+		});
+	
+		//Listener for JSON
+		app.post('/noauth-json', function(req, res)
+		{	
+			console.log("No authentication (json)");
+			server.receiveDataFromClient({
+				request:req,
+				response:res,
+				json: req.body,
+				type:'json'
+				});
+		});
+	}
+	function userPermissions()
+	{
 
-//broker information
-config.vendor = "Vendor name";
-
-//Authentication plugins
-config.auth_plugins.push({
-	name:			"noauth",
-	file:			"noauth.js"
-});
-
-//verbose
-//Output console debug messages
-config.verbose = false;
-
-//Spam console with all details
-config.debug = false;
-
-//Add lab servers below
-config.servers.push({
-	   host: 'server.example.com',
-	   port: 8080,
-
-		 id: 'LabServer',
-	 server: 'LabServer',
-	service: 'LabServerWebService',
-	   guid: '',
-	passkey: ''
-});
+	}
+	root.createAuth 	 = createAuth;
+	root.userPermissions = userPermissions;
+})();

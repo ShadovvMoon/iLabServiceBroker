@@ -24,42 +24,48 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-var easy_soap    = require('easysoap');
+var easy_soap    = require('../easysoap/index.js');
 var config = require('../config')
 
-function createConnection(host_url, host_port, soap_path, wsdl_path, guid, passkey)
+module.exports = (function ()
 {
-	//Setup the client parameters
-	var clientParams = {
+    var root = Object.create({});
+	function createConnection(host_url, host_port, soap_path, wsdl_path, guid, passkey)
+	{
+		//Setup the client parameters
+		var clientParams = {
+		
+		    //Soap connection
+		    host    : host_url,
+		    path    : soap_path,
+		    wsdl    : wsdl_path,
+			port	: host_port,
 	
-	    //Soap connection
-	    host    : host_url,
-	    path    : soap_path,
-	    wsdl    : wsdl_path,
-		port	: host_port,
-
-	    //Soap header
-	   	header  : [{
-			'name'      : 'AuthHeader',
-	        'value'     : '<identifier>'+guid+'</identifier><passkey>'+ passkey +'</passkey>',
-			'namespace' : 'ns1'
-		}]
-
-	};
-
-	//Setup the client options
-	var clientOptions = {
-	    secure : true/false //is https or http
-	};
-
-	//Create the new soap client
-	var SoapClient = new easy_soap.Client(clientParams, clientOptions);
-
-	SoapClient.on('error', function(error) {
-	    console.log("SOAP: " + error);
-	});
+		    //Soap header
+		   	header  : [{
+				'name'      : "AuthHeader",
+		        'value'     : '<identifier>'+guid+'</identifier><passKey>'+ passkey +'</passKey>',
+				'namespace' : "\"http://ilab.mit.edu\""
+			}],
+		};
 	
-	return SoapClient;
-}
-
-exports.createConnection = createConnection;
+		//Setup the client options
+		var clientOptions = {
+		    secure : true/false //is https or http
+		};
+	
+		if (config.debug) console.log(host_url+ wsdl_path)
+	
+		//Create the new soap client
+		var SoapClient = new easy_soap.Client(clientParams, clientOptions);
+	
+		SoapClient.on('error', function(error) {
+		    console.log("SOAP: " + error + ' (' + clientParams.host + ')');
+		});
+		
+		return SoapClient;
+	}
+	
+	root.createConnection = createConnection;
+	return root;
+})();

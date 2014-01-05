@@ -14,8 +14,12 @@ npm install express
 npm install form-data
 npm install jade
 npm install xml2js
-
-Modify the config.js file to suit your institution.
+npm install alfred
+npm install ministore
+npm install oauth
+npm install passport
+npm install passport-local
+npm install passport-facebook
 ```
 
 ####Notes
@@ -24,5 +28,10 @@ I will make package.json files in later commits. Some dependencies are not requi
 ####How to run
 ```
 node index.js
+
+Navigate to localhost:8080 in your browser.
+Default admin login
+Username: admin
+Password: password
 ```
 

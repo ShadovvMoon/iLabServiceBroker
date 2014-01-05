@@ -24,30 +24,24 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+var oauth = require('oauth');
+var sys = require('sys');
+var config = require('../../config');
 
-var config = {}
-module.exports = config;
-config.auth_plugins = [];
-//-----------------------------
+var consumer_key = "UQBb";
+var shared_secret = "GFhjkliuygFHVJhkliouityjfHKGHli";
+//config.key = "POiuyhnbvGHjkhgvCfghjkuYGHbvd";
 
-//hash information
-config.salt = 'ytgfvbnmjkhgcxdsertgvbnhjytfcxsrtghjuyyutrfgbvcxdffgh';
-config.serverSecret = 'someSecret';
+(function () {
+    var root = module.exports;
+	function createAuth(app, server)
+	{
 
-//Authentication plugins
-config.auth_plugins.push({
-	name:			"lti",
-	file:			"lti.js"
-});
-config.auth_plugins.push({
-	name:			"noauth",
-	file:			"noauth.js"
-});
+	}
+	function userPermissions()
+	{
 
-//verbose
-//Output console debug messages
-config.verbose = false;
-
-//verbose
-//Spam console with all details
-config.debug = false;
+	}
+	root.createAuth 	 = createAuth;
+	root.userPermissions = userPermissions;
+})();

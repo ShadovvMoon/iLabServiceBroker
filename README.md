@@ -1,7 +1,11 @@
 iLabServiceBroker
 =================
 
-An implementation of the iLab service broker in nodejs.
+iLab ServiceBroker achitecture using nodejs
+Developed by Sam Colbran
+
+Tools required:
+nodejs
 
 ##Installation
 ####broker

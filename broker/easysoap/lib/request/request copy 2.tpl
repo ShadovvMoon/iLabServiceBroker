@@ -11,6 +11,7 @@
 </soap:Header>
 <% } %>
 
-<soap:Body><% if (namespace !== false) {%><<%=method%> xmlns=<%="\"http://ilab.mit.edu\""%>><% } else {%> <<%=method%>> <% } %><% if (params !== false) {%><%= params%><% } %><% if (namespace !== false) {%></<%=method%>><% } else { %> </<%=method%>> <% } %>
+<soap:Body>
+    <% if (namespace !== false) {%><<%=method%> xmlns=<%="\"http://ilab.mit.edu\""%>><% } else {%> <<%=method%>> <% } %><% if (params !== false) {%><%= params%><% } %><% if (namespace !== false) {%></<%=method%>><% } else { %> </<%=method%>> <% } %>
 </soap:Body>
 </soap:Envelope>

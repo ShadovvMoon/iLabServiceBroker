@@ -1,0 +1,16 @@
+extends layout
+block content
+	div.container(style='width:300px')
+		div.row(style='width:300px')
+			div.span12(style='width:300px')
+				form(method='post', action='/', id="login-form")
+					div(align="center",style='width:340px')
+						legend Service Broker
+					div.form-actions(style='width:300px')
+						p Username
+							input(name="username", type='text', style='margin-left:10px')
+						p Password 
+							input(name='password', id="password", type='password', style='margin-left:8px')
+						input(name="hash", id='hash', type='hidden')
+						div(align="right")
+							input.btn.btn-primary(id="subbtn", value='Login', onClick='submitLogin()', type='button')

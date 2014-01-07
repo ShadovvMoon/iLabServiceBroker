@@ -31,18 +31,33 @@ function create(app, server, passport, storage)
 	var server_settings = storage['settings'];
 	var servers = storage['servers'];
 
+	//Global commands
+	app.get('/logout', function (req, res)
+	{
+		req.logout();
+		res.redirect("/login");
+	});
+
+	function render_admin_page(name,req,res)
+	{
+		if (req.user)
+			return res.render(name);
+		return res.redirect("/");
+	}
+
 	//Index page
 	//------------------------
+		app.get('/login', function(req, res, next)
+		{
+			render_admin_page('login', req, res);
+		});
+
 		app.get('/', function(req, res, next)
 		{
 			if (req.user)
-			{
 				return res.render('admin/admin');
-			}
 			else
-			{
 				return res.render('login');
-			}
 		});
 	
 		app.post('/', passport.authenticate('local'), function (req, res)
@@ -66,33 +81,30 @@ function create(app, server, passport, storage)
 	//------------------------
 		app.get('/user', function(req, res, next)
 		{
-			if (req.user)
-			{
-				return res.render('admin/user');
-			}
-			return res.redirect("/");
+			render_admin_page('admin/user'	, req, res);
 		});
 
 	//Stats page
 	//------------------------
 		app.get('/stats', function(req, res, next)
 		{
-			if (req.user)
-			{
-				return res.render('admin/stats');
-			}
-			return res.redirect("/");
+			render_admin_page('admin/stats'	, req, res);
+		});
+
+
+	//Debug page
+	//------------------------
+		app.get('/debug', function(req, res, next)
+		{
+			console.log("Rendering debug");
+			render_admin_page('admin/debug'	, req, res);
 		});
 
 	//Servers page
 	//------------------------
 		app.get('/servers', function(req, res, next)
 		{
-			if (req.user)
-			{
-				return res.render('admin/servers');
-			}
-			return res.redirect("/");
+			render_admin_page('admin/servers', req, res);
 		});
 
 		app.get('/admin-ui', function(req, res)
@@ -114,10 +126,9 @@ function create(app, server, passport, storage)
 			{
 				var old_id = req.body['hidden-identifier'];
 				servers.remove(old_id);
-
-				return res.redirect("/servers");
 			}
-			return res.redirect("/");
+
+			render_admin_page('admin/servers', req, res);
 		});
 
 		//Saving
@@ -162,10 +173,8 @@ function create(app, server, passport, storage)
 
 				//Force a server update
 				server.flushServers();
-
-				return res.redirect("/servers");
 			}
-			return res.redirect("/");
+			render_admin_page('admin/servers', req, res);
 		});
 	
 }

@@ -36,10 +36,6 @@ config.serverSecret = 'someSecret';
 
 //Authentication plugins
 config.auth_plugins.push({
-	name:			"lti",
-	file:			"lti.js"
-});
-config.auth_plugins.push({
 	name:			"noauth",
 	file:			"noauth.js"
 });
@@ -51,3 +47,6 @@ config.verbose = false;
 //verbose
 //Spam console with all details
 config.debug = false;
+
+//Load the servers in order (instead of all at once)
+config.flush_ordered = false;

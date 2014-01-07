@@ -20,6 +20,7 @@ npm install oauth
 npm install passport
 npm install passport-local
 npm install passport-facebook
+npm install caterpillar
 ```
 
 ####Notes

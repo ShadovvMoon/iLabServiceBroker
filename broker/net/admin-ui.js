@@ -24,12 +24,14 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+var config = require("../config.js");
 var root = module.exports;
 function create(app, server, passport, storage)
 {
 	var access_users = storage['users'];
 	var server_settings = storage['settings'];
 	var servers = storage['servers'];
+	var wrappers = storage['wrappers'];
 
 	//Global commands
 	app.get('/logout', function (req, res)
@@ -82,6 +84,75 @@ function create(app, server, passport, storage)
 		app.get('/user', function(req, res, next)
 		{
 			render_admin_page('admin/user'	, req, res);
+		});
+
+	//Wrappers page
+	//------------------------
+		app.get('/wrappers', function(req, res, next)
+		{
+			render_admin_page('admin/wrappers'	, req, res);
+		});
+
+	
+		//Saving
+		app.post('/save-wrapper', function(req, res)
+		{
+			if (req.user)
+			{
+				console.log(req.body);
+
+				//Update core values
+				var old_id = req.body['hidden-identifier'];
+				var name = req.body['name'];
+				var guid = req.body['guid'];
+				var key = req.body['key'];
+
+				if (old_id)
+					wrappers.remove(old_id);
+
+				var wrapper_data = wrappers.get(name);
+				if (!wrapper_data)
+					wrapper_data = {};
+
+				wrapper_data['guid'] = guid;
+				wrapper_data['key']  = key;
+
+				//Function access
+				var functions = config.supportedFunctions;
+				var keys = Object.keys(req.body);
+				var function_dict = wrapper_data['function'];
+				if (!function_dict)
+					function_dict={}
+				for (var i = 0; i < functions.length; i++)
+				{
+					var f = functions[i];	
+					if (keys.indexOf(f) != -1)
+						function_dict[f] = 1;
+					else
+						function_dict[f] = 0;
+				}
+				wrapper_data['function']= function_dict;
+			
+				//Server access
+				var servs = servers.list();
+				var server_dict = wrapper_data['server'];
+				if (! server_dict)
+					server_dict ={}
+				for (var i = 0; i < servs.length; i++)
+				{
+					var f = servs[i];	
+					if (keys.indexOf(f) != -1)
+						server_dict[f] = 1;
+					else
+						server_dict[f] = 0;
+				}
+				wrapper_data['server'] = server_dict;
+
+				//Write new data
+				wrappers.set(name, wrapper_data);
+				return res.redirect("/wrappers");
+			}
+			return res.redirect("/");
 		});
 
 	//Stats page

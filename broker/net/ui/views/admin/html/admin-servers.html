@@ -38,7 +38,7 @@
 	                 dataType: 'jsonp',
 	                 data: "action=getBrokerInfo",                      
 	                 jsonp: 'callback',
-	                 url: 'http://'+ broker.host + ":"+ broker.port+'/noauth-jsonp?callback=?',                     
+	                 url: 'http://'+ broker.host + ":"+ broker.port+'/admin-jsonp?callback=?',                     
 	                 success: function callback(data) {
 				call_func(data);
 			}});
@@ -49,7 +49,7 @@
                     dataType: 'jsonp',
                     data: "action=getLabList",                      
                     jsonp: 'callback',
-                    url: 'http://'+ broker.host + ":"+ broker.port+'/noauth-jsonp?callback=?',                     
+                    url: 'http://'+ broker.host + ":"+ broker.port+'/admin-jsonp?callback=?',                     
                     success: function callback(data) {
 						call_func(data);
 					}
@@ -73,7 +73,7 @@
                     dataType: 'jsonp',
                     data: "action=getLabConfiguration&id="+lab_id,                      
                     jsonp: 'callback',
-                    url: 'http://'+ broker.host + ":"+ broker.port+'/noauth-jsonp?callback=?',                     
+                    url: 'http://'+ broker.host + ":"+ broker.port+'/admin-jsonp?callback=?',                     
                     success: function callback(data) {
 						call_func(data);
 					}
@@ -206,6 +206,7 @@
 				text_input.select ();
 			}
 		}
+
 	</script>
 
     <div id="wrapper">
@@ -229,6 +230,7 @@
             <li><a href="/"><i class="fa fa-edit"></i> About</a></li>
 			<li><a href="user"><i class="fa fa-user"></i> Users</a></li>
 			<li><a href="stats"><i class="fa fa-bar-chart-o"></i> Statistics</a></li>
+            <li><a href="wrappers"><i class="fa fa-link"></i> Wrappers</a></li>
 			<li><a href="debug"><i class="fa fa-wrench"></i> Maintenance</a></li>
             <li class="active"><a href="servers"><i class="fa fa-desktop"></i> Experiments</a></li>
           </ul>
@@ -317,7 +319,7 @@
 		</form>
 		<br/>
 		<div class="row">
-			<div id="experiment_content"></div>
+			<div id="experiment_content" style="height:180px"></div>
 		</div>
       </div><!-- /#page-wrapper -->
 
@@ -336,7 +338,7 @@
 			{
 				var lab_id = labs[i];
 				experimentList.innerHTML+=("<li><a href=\"#\" onClick=\"modifyServer('"+ lab_id+"')\">"+lab_id+"</a></li>");
-				experimentContent.innerHTML+="<div class=\"col-xs-4\"><div id=\"panel_" + lab_id + "\" class=\"panel panel-warning\"><div class=\"panel-heading\"><font style=\"font-size: 16px;\" class=\"panel-title\" id=\"create-title\">"+ lab_id +"</font><button style=\"right:0px; position:absolute; margin-right: 18px; margin-top: -7px\" type=\"button\" class=\"btn btn-warning\" onClick=\"modifyServer('"+lab_id+"')\" id=\"panel_button_" + lab_id + "\">Edit</button></div><div class=\"panel-body\" align=\"center\" style=\"height:180px\"><img id=\"panel_image_" + lab_id + "\" style=\"height:100%\" src=\"\"/><p align=\"center\" id=\"panel_error_" + lab_id + "\" style=\"width:100%\"></p></div></div></div>";
+				experimentContent.innerHTML+="<div class=\"col-xs-4\"><div id=\"panel_" + lab_id + "\" class=\"panel panel-warning\"><div class=\"panel-heading\"><font style=\"font-size: 12px;\" class=\"panel-title\" id=\"create-title\">"+ lab_id +"</font><button style=\"right:0px; position:absolute; margin-right: 18px; margin-top: -7px\" type=\"button\" class=\"btn btn-warning\" onClick=\"modifyServer('"+lab_id+"')\" id=\"panel_button_" + lab_id + "\">Edit</button></div><div class=\"panel-body\" align=\"center\" style=\"height:180px\"><img id=\"panel_image_" + lab_id + "\" style=\"max-width:100%; max-height:100%;\" src=\"\"/><p align=\"center\" id=\"panel_error_" + lab_id + "\" style=\"width:80%\"></p></div></div></div>";
 
 				var responseFunction = (function(lab_id)
 				{

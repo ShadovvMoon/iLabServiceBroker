@@ -1,0 +1,356 @@
+	<title>jsonp test</title> 
+	<link href="public/stylesheets/bootstrap.min.css" rel="stylesheet" type="text/css">
+	<link href="public/stylesheets/style.css" rel="stylesheet" type="text/css"> 
+	<script src="http://code.jquery.com/jquery-1.9.1.min.js"></script>
+	<span type="hidden" id="token-string"></span>
+    <script type="text/javascript">
+		//------------------------------------------------------------------------------------------------
+		//Methods to interact with the nodejs service broker.
+		var broker = {
+			host: "localhost",
+			port: 3000
+		};
+		//------------------------------------------------------------------------------------------------
+		//call_func = function(data)
+		//data keys: "vendor"
+
+		function tokenString()
+		{
+			var token = token_string;
+			return '&uid=' + token['u'] + '&token=' + token['t'];
+		}
+
+		function getBrokerInfo(call_func)
+		{
+			$.ajax({
+                    dataType: 'jsonp',
+                    data: "action=getBrokerInfo"+tokenString(),          
+                    jsonp: 'callback',
+                    url: 'http://'+ broker.host + ":"+ broker.port+'/lti-jsonp?callback=?',                     
+                    success: function callback(data) {
+						call_func(data);
+					}
+               	});
+		}	
+		//call_func = function(data)
+		//data is an a array with lab identifiers
+		function getLabList(call_func)
+		{
+			$.ajax({
+                    dataType: 'jsonp',
+                    data: "action=getLabList"+tokenString(),                        
+                    jsonp: 'callback',
+                    url: 'http://'+ broker.host + ":"+ broker.port+'/lti-jsonp?callback=?',                     
+                    success: function callback(data) {
+						call_func(data);
+					}
+               	});
+		}
+		function getLabConfiguration(lab_id, call_func)
+		{
+			$.ajax({
+                    dataType: 'jsonp',
+                    data: "action=getLabConfiguration&id="+lab_id+tokenString(),                         
+                    jsonp: 'callback',
+                    url: 'http://'+ broker.host + ":"+ broker.port+'/lti-jsonp?callback=?',                     
+                    success: function callback(data) {
+						call_func(data);
+					}
+               	});
+		}
+		function getLabStatus(lab_id, call_func)
+		{
+			$.ajax({
+                    dataType: 'jsonp',
+                    data: "action=getLabStatus&id="+lab_id+tokenString(),                        
+                    jsonp: 'callback',
+                    url: 'http://'+ broker.host + ":"+ broker.port+'/lti-jsonp?callback=?',                     
+                    success: function callback(data) {
+						call_func(data);
+					}
+               	});
+		}
+		function getEffectiveQueueLength(lab_id, call_func)
+		{
+			$.ajax({
+                    dataType: 'jsonp',
+                    data: "action=getEffectiveQueueLength&id="+lab_id+tokenString(),                        
+                    jsonp: 'callback',
+                    url: 'http://'+ broker.host + ":"+ broker.port+'/lti-jsonp?callback=?',                     
+                    success: function callback(data) {
+						call_func(data);
+					}
+               	});
+		}
+		function validateExperiment(lab_id, experimentID, experimentSpecification, call_func)
+		{
+			$.ajax({
+                    dataType: 'jsonp',
+                    data: "action=validate&id="+lab_id + "&experimentSpecification="+ experimentSpecification+"&experimentID="+ experimentID+tokenString(),                        
+                    jsonp: 'callback',
+                    url: 'http://'+ broker.host + ":"+ broker.port+'/lti-jsonp?callback=?',                     
+                    success: function callback(data) {
+						call_func(data);
+					}
+               	});
+		}
+		function submitExperiment(lab_id, experimentID, experimentSpecification, call_func)
+		{
+			$.ajax({
+                    dataType: 'jsonp',
+                    data: "action=submit&id="+lab_id + "&experimentSpecification="+ experimentSpecification+"&experimentID="+ experimentID+tokenString(),                       
+                    jsonp: 'callback',
+                    url: 'http://'+ broker.host + ":"+ broker.port+'/lti-jsonp?callback=?',                     
+                    success: function callback(data) {
+						call_func(data);
+					}
+               	});
+		}
+		function addToXml(xml, key, val, type)
+		{
+			xml += ("<"+ key + ">"+ val + "</"+ key + ">");
+			return xml;
+		}
+
+		//------------------------------------------------------------------------------------------------
+		var lab_id = "Radioactivity 1";
+		var is_running = false;
+		function runExperiment()
+		{
+			//CreateXmlSpecification
+			var selected_source_name = document.getElementById("source-list").value;
+			var selected_duration = document.getElementById("experiment-duration").value;
+			var selected_repeats = document.getElementById("experiment-repeats").value;
+
+			var xml_string = "";
+			xml_string = addToXml(xml_string, "setupName", "Radioactivity versus Distance");
+			xml_string = addToXml(xml_string, "setupId", "RadioactivityVsDistance");
+			xml_string = addToXml(xml_string, "sourceName", selected_source_name);
+			xml_string = addToXml(xml_string, "absorberName", "None");
+			xml_string = addToXml(xml_string, "distance", "15,20");
+			xml_string = addToXml(xml_string, "duration", selected_duration);
+			xml_string = addToXml(xml_string, "repeat", selected_repeats);
+
+			//First validate the experiment
+			var runButton = document.getElementById("run-experiment-button");
+			if (is_running)
+			{
+				
+				runButton.innerHTML  = "Submitting Experiment...";
+				runButton.className  = "btn btn-success disabled";
+				submitExperiment(lab_id, '1', xml_string, function(data)
+				{
+					console.log(data);
+					if (data['vReport'][0]['accepted'] == 'true')
+					{
+						runButton.innerHTML = "Submitted";
+						//runButton.style.display = 'none';
+					}
+				})
+			}
+			else
+			{
+				var runButton = document.getElementById("run-experiment-button");
+				runButton.innerHTML  = "Validating...";
+				runButton.className  = "btn btn-primary disabled";
+	
+				console.log(xml_string);
+			
+				validateExperiment(lab_id, '1', xml_string, function(data)
+				{
+					if (data['accepted'] == 'true')
+					{
+						runButton.innerHTML = "Run Experiment";
+						runButton.className = "btn btn-success";
+
+						is_running = true;
+					}
+					else
+					{
+						runButton.innerHTML = "Validation failed";
+						runButton.className = "btn btn-primary";
+					}
+				});
+			}
+		}
+
+		var refresh_counter = 0;
+		var wait_time = 0;
+		function updateWait()
+		{
+			wait_time--;
+			if (wait_time < 0)
+				wait_time = 0;
+
+			var timer = document.getElementById('wait_timer');
+			if (timer != null)
+			{
+				timer.innerHTML = "Wait: "+ wait_time;
+
+				refresh_counter++;
+				if (refresh_counter >= 10)
+				{
+					refresh_counter=0;
+
+					//Update the status message
+					getLabStatus(lab_id, function(status)
+					{
+						getEffectiveQueueLength(lab_id, function(queue)
+						{
+							//Update the queue length
+							var status_message = document.getElementById('status_message');
+							if (status_message != null)
+							{
+								status_message.innerHTML = status["labStatusMessage"];
+							}
+			
+							var queue_length = document.getElementById('queue_length');
+							if (queue_length != null)
+							{
+								queue_length.innerHTML = "Size: " + queue["effectiveQueueLength"];
+							}
+
+							wait_time = queue["estWait"];
+						});
+					});
+				}
+			}
+		}
+
+		//------------------------------------------------------------------------------------------------
+		getBrokerInfo(function(data)
+		{
+			getLabList(function(labs)
+			{
+				//document.getElementById("page-name").innerHTML = data["vendor"];
+
+				//Which option is selected?
+				
+		
+				getLabConfiguration(lab_id, function(configuration)
+				{
+					getLabStatus(lab_id, function(status)
+					{
+						getEffectiveQueueLength(lab_id, function(queue)
+						{
+							var labConfig = configuration['labConfiguration'];
+							var labName = labConfig['$']['title'];
+					
+							var textHtml = "<br/><br/>";
+		
+							//Add any photos for the laboritory
+							var labCamera = labConfig['navmenuPhoto'];
+							for (var i = 0; i < labCamera.length; i++)
+							{
+								var urls = labCamera[i]['image'];
+								for (var a = 0; a < urls.length; a++)
+								{
+									textHtml+= "<img src=\""+ urls[a]+"\"/> ";
+								}
+							}
+							textHtml+= "<br/>";
+							textHtml+= "<br/>";
+					
+							//Add any lab camera links
+							var labCamera = labConfig['labCamera'];
+							for (var i = 0; i < labCamera.length; i++)
+							{
+								var hasLink = false; 
+								var urls = labCamera[i]['url'];
+								for (var a = 0; a < urls.length; a++)
+								{
+									if (urls[a] != "")
+									{
+										if (!hasLink)
+										{
+											textHtml+= "Live camera " + (i+1) + ": ";
+										}
+						
+										textHtml+= "<a href=\""+ urls[a]+"\">link</a><br/>";
+										hasLink = true;
+									}
+								}
+					
+								if (hasLink)
+								{
+									textHtml+= "<br/>";
+								}
+							}
+					
+							//Add status messages
+							console.log(configuration);
+
+							wait_time = queue["estWait"];
+							textHtml+= "<p><b>Queue</b><br/><span id=\"queue_length\">Size: "+queue["effectiveQueueLength"]+"</span><br/><span id=\"wait_timer\">Wait: "+queue["estWait"]+"</span></p>";
+							textHtml+= "<p><b>Status</b><br/><span id=\"status_message\">"+ status["labStatusMessage"]+"</span></p>";
+		
+							$('div.progress').hide();
+					    	$('strong.message').text(labName);
+							$('normal.text').html(textHtml);
+					    	$('div.alert').show();
+						});
+					});
+				});
+			});
+		});
+
+		//Regular updates to the wait time
+		setInterval(updateWait,1000);
+
+
+		//------------------------------------------------------------------------------------------------
+		
+
+		
+    </script>
+</head>
+<body>
+	<div class="container" style="width:635px">
+		<div class="row">
+			<div class="span12">
+				<!--<form method="post" action="#select_link" style="margin:0 0 0px">-->
+					<legend id="page-name"style="width:635px">Radioactivity Practical</legend>
+				<!--</form>-->
+			</div>
+		</div>
+		<div class="row">
+			<div class="span12">
+				<div class="alert hide" style="height:400px; width:585px">
+					<br/>
+					<div style="float:left; margin-left:15px; width: 200px;" >
+						<span>
+							<font size="4"><strong class="message"></strong></font>
+						</span>
+						<span>
+							<normal class="text"></normal>
+						</span>
+					</div>
+					<div style="float: left; width: 30px;" >&nbsp;</div>
+					<div style="float: left; width: 340px">
+						<span id="experiment-setup">
+							<font size="4"><strong>Setup Experiment</strong></font>
+							<div style="margin-bottom:0px" class="form-actions" >
+								<font color="#000000">
+								&nbsp;&nbsp;Source&nbsp;&nbsp;&nbsp;
+								<select id="source-list" name="Experiments" id="experiment" style="margin-bottom:0px;">
+									<option>Strontium-90</option>
+								</select>
+								<br/><br/>
+								Duration&nbsp;&nbsp;&nbsp;
+								<input id="experiment-duration" type="text" style="width: 50px;"value="5">
+								<br/>
+								&nbsp;&nbsp;Repeat&nbsp;&nbsp;&nbsp;
+								<input id="experiment-repeats" type="text" style="width: 50px;" value="3">
+	
+								</font>
+							</div>
+							<div style="margin-top:0px; margin-bottom:0px" class="form-actions">
+							<div align="right"><button style="width:300px" onclick="runExperiment()" id="run-experiment-button" type="submit" value="Validate Experiment" class="btn btn-primary">Validate Experiment</button></div></div>
+						</span>
+					</div>
+			</div>
+	</div>
+	
+	<script src="http://code.jquery.com/jquery-1.9.1.min.js"></script>
+	<script src="public/javascripts/bootstrap.min.js"></script>     
+	<script src="public/javascripts/script.js"></script>  

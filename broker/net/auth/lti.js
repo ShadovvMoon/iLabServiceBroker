@@ -24,38 +24,59 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+var oauth = require('oauth');
+var sys = require('sys');
+var config = require('../../config');
 
-var config = {}
-module.exports = config;
-config.auth_plugins = [];
-//-----------------------------
+var consumer_key 		= "12345";
+var shared_secret		= "secret";
+//config.key = "POiuyhnbvGHjkhgvCfghjkuYGHbvd";
 
-//hash information
-config.salt = 'ytgfvbnmjkhgcxdsertgvbnhjytfcxsrtghjuyyutrfgbvcxdffgh';
-config.serverSecret = 'someSecret';
+(function () {
+    var root = module.exports;
+	function createAuth(app, server)
+	{
+		//Listener for JSONP
+		app.get('/lti-jsonp', function(req, res)
+		{
+			console.log("LTI (jsonp)");
+			server.receiveDataFromClient({
+				request:req,
+				response:res,
+				json:req.query,
+				type:'jsonp'
+			});
+		});
 
-//Functions
-config.supportedFunctions = ["getBrokerInfo", "getLabList", "getLabStatus", "getLabConfiguration", "getExperimentStatus", "getEffectiveQueueLength", "retrieveResult", "cancel", "submit", "validate"];
+		//Listener for JSON
+		app.post('/lti-json', function(req, res)
+		{	
+			console.log("LTI (json)");
+			server.receiveDataFromClient({
+				request:req,
+				response:res,
+				json: req.body,
+				type:'json'
+				});
+		});
 
-//Authentication plugins
-config.auth_plugins.push({
-	name:			"admin",
-	file:			"admin.js"
-});
-config.auth_plugins.push({
-	name:			"wrapper",
-	file:			"wrapper.js"
-});
+		//Listener for Login
+		app.post('/access_token', passport.authenticate('oauth', { session: false }), function (req, res){
+   			var body 		= req.body;
+			var uid 		= body['user_id'];
+			var fullname 	= body['lis_person_name_full'];
+			var givenname 	= body['lis_person_name_given'];
 
-//verbose
-//Output console debug messages
-config.verbose 			= false;
+			console.log("LTI Login " + fullname);
 
-//Spam console with all details
-config.debug 			= false;
+			res.setHeader("content-type", "text/html");
+		    res.send("Welcome " + givenname);
+  		});
+	}
+	function userPermissions()
+	{
 
-//Show express requests
-config.show_requests 	= false;
-
-//Load the servers in order (instead of all at once)
-config.flush_ordered 	= false;
+	}
+	root.createAuth 	 = createAuth;
+	root.userPermissions = userPermissions;
+})();

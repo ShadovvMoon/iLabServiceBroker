@@ -179,12 +179,20 @@
 		{
 			callback(data, data['faultstring']);
 	    });
+
+		experimentSpecification = experimentSpecification.replace(/&/g, '&amp;')
+               .replace(/</g, '&lt;')
+               .replace(/>/g, '&gt;')
+               .replace(/"/g, '&quot;')
+               .replace(/'/g, '&apos;')
+
+
 	    this.soap_connection.call
 		({
 	        'method' : 'Submit',
 			'params' : {
 				'experimentID': experimentID,
-				'experimentSpecification': experimentSpecification,
+				'experimentSpecification': "&lt;experimentSpecification&gt;"+ experimentSpecification+";&lt;/experimentSpecification&gt;",
 				'userGroup': userGroup,
 				'priorityHint': priorityHint}
 	    });
@@ -197,11 +205,18 @@
 		{
 			callback(data, data['faultstring']);
 	    });
+
+		experimentSpecification = experimentSpecification.replace(/&/g, '&amp;')
+               .replace(/</g, '&lt;')
+               .replace(/>/g, '&gt;')
+               .replace(/"/g, '&quot;')
+               .replace(/'/g, '&apos;')
+
 	    this.soap_connection.call
 		({
 	        'method' : 'Validate',
 			'params' : {
-				'experimentSpecification': experimentSpecification,
+				'experimentSpecification': "&lt;experimentSpecification&gt;"+ experimentSpecification+";&lt;/experimentSpecification&gt;",
 				'userGroup': userGroup}
 	    });
 	}

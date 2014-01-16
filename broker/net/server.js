@@ -41,34 +41,17 @@ var plugin_list = {};
 var lab_list 	= {};
 var error_list 	= {};
 
-//Logging and debug information
-var log_file 	= 'database/debug.log';
-fs.unlink(log_file); //Delete the old log
-
-var logStream = fs.createWriteStream(log_file, {flags: 'a'});
-function hook_stdout(stream)
-{
-    var old_write = process.stdout.write
-    process.stdout.write = (function(write)
-	{
-        return function(string, encoding, fd)
-		{
-			stream.write(string);
-            write.apply(process.stdout, arguments);
-        }
-    })(process.stdout.write)
-}
-hook_stdout(logStream);
-
 //Get server information
 var Store 			 = require('ministore')('database')
 var access_users 	 = Store('users');
 var server_settings	 = Store('settings');
 var servers_database = Store('servers');
+var wrapper_database = Store('wrappers');
 
 //Auth
-passport 		= require("passport");
-LocalStrategy 	= require('passport-local').Strategy;
+passport 			= require("passport");
+LocalStrategy 		= require('passport-local').Strategy;
+ConsumerStrategy   	= require('../passport-http-2legged-oauth').Strategy;
 
 //Passport
 passport.serializeUser(function(user, done)
@@ -100,6 +83,45 @@ passport.use(new LocalStrategy
 			return done(null, false, { message: 'Incorrect username.' });
   	}
 ));
+
+//Use LTI wrapper instead
+/*
+var appList = {};
+function findApp(key, next)
+{
+    var consumer = appList[key];
+    if (consumer)
+        next(null, {secret: consumer.secret});
+   	else
+        next(true);
+}
+
+passport.use(new ConsumerStrategy
+(
+  function(consumerKey, done)
+  {
+	findApp(consumerKey, function(err, consumer) {
+        if (err) { return done(err); }
+        if (!consumer) { return done(null, false); }
+        console.log("Found an app with the suplied key '%s'", consumerKey);
+        return done(null, consumer, consumer.secret);
+    });
+  },
+  function checkTimestampAndNonce(timestamp, nonce, app, req, done)
+  {
+	console.log("Time checking");
+    var timeDelta = Math.round((new Date()).getTime() / 1000) - timestamp;
+    if (timeDelta >= 10) {
+		console.log("failed");
+        done(null, false);
+    }
+    else {
+		console.log("successful");
+        done(null, true);
+    }
+  }
+));
+*/
 
 function loadServer(server_number, ordered, nextServer)
 {
@@ -179,6 +201,27 @@ function flushServers()
 
 function start()
 {
+
+	//Logging and debug information
+	var log_file 	= 'database/debug.log';
+	fs.unlink(log_file, function(err) { //Delete the old log
+	
+		var logStream = fs.createWriteStream(log_file, {flags: 'a'});
+		function hook_stdout(stream)
+		{
+		    var old_write = process.stdout.write
+		    process.stdout.write = (function(write)
+			{
+		        return function(string, encoding, fd)
+				{
+					stream.write(string);
+		            write.apply(process.stdout, arguments);
+		        }
+		    })(process.stdout.write)
+		}
+		hook_stdout(logStream);
+	
+
 	//Start message
 	//-------------------------------
 	console.log("");
@@ -193,6 +236,13 @@ function start()
 	var secret = 'Some secret thingo';//'''+crypto.randomBytes(64)+'';
 	app.configure(function(){
 		app.set('port', 8080);
+
+
+		if (config.show_requests)
+		{
+			app.use(express.logger("dev"));
+		}
+
 
 		app.use(express.cookieParser());
 		app.use(express.bodyParser());
@@ -248,7 +298,7 @@ function start()
 		server_settings.set('vendor-guid', random_uuid);
 	}
 
-	adminui.create(app, root, passport, {'users': access_users, 'settings': server_settings, 'servers': servers_database});
+	adminui.create(app, root, passport, {'users': access_users, 'settings': server_settings, 'servers': servers_database, 'wrappers': wrapper_database});
 
 	//Initialise auth plugins
 	//-------------------------------
@@ -308,10 +358,18 @@ function start()
 				fs.readFile(log_file, 'utf8', responseFunction);
 
 				break;
+			case "getWrappers":	//Returns all the wrapper information
+				var labList = {};
+				var keys = wrapper_database.list();
+				for (var n=0; n < keys.length; n++)
+				{
+					labList[keys[n]] = (wrapper_database.get(keys[n]));
+				}
+				sendReplyToClient(client, labList);
+				break;
 			case "getBrokerInfo":	//Returns an extended version of the broker info (containing GUID)
 				sendReplyToClient(client, {vendor: server_settings.get('vendor-name'),
 										 	 guid: server_settings.get('vendor-guid')});
-
 				break;
 			case "getLabInfo": 		//Returns all the details about a lab server
 				sendReplyToClient(client, servers_database.get(json['id']));
@@ -391,6 +449,8 @@ function start()
 				}
 			}
 		}
+
+		
 	}
 
 	//Show an information page
@@ -416,5 +476,7 @@ function start()
 	root.receiveAdminDataFromClient = receiveAdminDataFromClient;
 	root.receiveDataFromClient = receiveDataFromClient;
 	root.flushServers = flushServers;
+	root.wrappers = wrapper_database;
+});
 }
 exports.start = start;

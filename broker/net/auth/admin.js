@@ -24,19 +24,36 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-var oauth = require('oauth');
 var sys = require('sys');
 var config = require('../../config');
-
-var consumer_key = "UQBb";
-var shared_secret = "GFhjkliuygFHVJhkliouityjfHKGHli";
-//config.key = "POiuyhnbvGHjkhgvCfghjkuYGHbvd";
 
 (function () {
     var root = module.exports;
 	function createAuth(app, server)
 	{
-
+		//Listener for JSONP
+		app.get('/admin-jsonp', function(req, res)
+		{
+			if (req.user)
+				server.receiveDataFromClient({
+					request:req,
+					response:res,
+					json:req.query,
+					type:'jsonp'
+				});
+		});
+	
+		//Listener for JSON
+		app.post('/admin-json', function(req, res)
+		{	
+			if (req.user)
+				server.receiveDataFromClient({
+					request:req,
+					response:res,
+					json: req.body,
+					type:'json'
+					});
+		});
 	}
 	function userPermissions()
 	{

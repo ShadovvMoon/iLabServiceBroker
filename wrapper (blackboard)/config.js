@@ -24,38 +24,22 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-
 var config = {}
 module.exports = config;
-config.auth_plugins = [];
 //-----------------------------
 
-//hash information
-config.salt = 'ytgfvbnmjkhgcxdsertgvbnhjytfcxsrtghjuyyutrfgbvcxdffgh';
-config.serverSecret = 'someSecret';
+//Broker connection
+config.broker_host 	  = 'localhost';
+config.broker_port    = 8080;
 
-//Functions
-config.supportedFunctions = ["getBrokerInfo", "getLabList", "getLabStatus", "getLabConfiguration", "getExperimentStatus", "getEffectiveQueueLength", "retrieveResult", "cancel", "submit", "validate"];
+//Wrapper info
+config.wrapper_uid 	  = '';
+config.wrapper_key 	  = '';
 
-//Authentication plugins
-config.auth_plugins.push({
-	name:			"admin",
-	file:			"admin.js"
-});
-config.auth_plugins.push({
-	name:			"wrapper",
-	file:			"wrapper.js"
-});
+//LTI info
+config.consumer_key   = '';
+config.shared_secret  = '';
 
-//verbose
-//Output console debug messages
-config.verbose 			= false;
-
-//Spam console with all details
-config.debug 			= false;
-
-//Show express requests
-config.show_requests 	= false;
-
-//Load the servers in order (instead of all at once)
-config.flush_ordered 	= false;
+//Other
+config.allow_debug	  = false; //Enable debug page
+config.show_requests  = false; //Show Express requests

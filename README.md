@@ -22,6 +22,10 @@ npm install passport-local
 npm install passport-http-2legged-oauth
 npm install passport-facebook
 npm install caterpillar
+npm install underscore
+npm install promise
+npm install xmldoc
+npm install pkginfo
 ```
 
 ####Notes

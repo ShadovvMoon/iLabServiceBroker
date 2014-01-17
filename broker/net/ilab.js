@@ -90,7 +90,6 @@
 		if (config.verbose) console.log("LAB: GetLabConfiguration " + this.host);
 		this.soap_connection.once('GetLabConfiguration', function(err, data, header)
 		{
-			console.log("Response");
 			parseString(data['GetLabConfigurationResult'], {trim: true}, function (err, result)
 			{
 				callback(result, data['faultstring']);

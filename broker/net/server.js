@@ -75,7 +75,7 @@ passport.use(new LocalStrategy
 			var d = shasum.digest('hex');
 
 			if (selected_user['hash'] == d)
-				return done(null, {id:selected_user['id'] , username:username, password:password});
+				return done(null, {id:selected_user['id'] , username:username, hash:d});
 			else
 				return done(null, false, { message: 'Incorrect password.' });
 		}
@@ -357,6 +357,29 @@ function start()
 	       		})(client);
 				fs.readFile(log_file, 'utf8', responseFunction);
 
+				break;
+			case "updatePassword":
+				var old_password = json['old'];
+				var new_password = json['new'];
+	
+				//Check that the old password matches the user
+				var shasum = crypto.createHash('sha1'); shasum.update(config.salt); shasum.update(old_password);
+				var d = shasum.digest('hex');
+				if (d == client.request.user.hash)
+				{
+					//Update the password file
+					shasum = crypto.createHash('sha1'); shasum.update(config.salt); shasum.update(new_password);
+					d = shasum.digest('hex');
+
+					var user_settings = access_users.get(client.request.user.username);
+					user_settings['hash'] = d;
+					access_users.set(client.request.user.username, user_settings);
+
+					client.request.user.hash = d;
+					sendReplyToClient(client, {success:true});
+				}
+				else
+					sendReplyToClient(client, {success:false});
 				break;
 			case "getWrappers":	//Returns all the wrapper information
 				var labList = {};

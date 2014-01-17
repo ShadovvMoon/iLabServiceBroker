@@ -35,7 +35,7 @@
         <!-- Collect the nav links, forms, and other content for toggling -->
         <div class="collapse navbar-collapse navbar-ex1-collapse">
           <ul class="nav navbar-nav side-nav">
-            <li class="active"><a href="/"><i class="fa fa-edit"></i> About</a></li>
+            <li><a href="/"><i class="fa fa-edit"></i> About</a></li>
 			<li><a href="user"><i class="fa fa-user"></i> Users</a></li>
 			<li><a href="stats"><i class="fa fa-bar-chart-o"></i> Statistics</a></li>
             <li><a href="wrappers"><i class="fa fa-link"></i> Wrappers</a></li>
@@ -58,7 +58,7 @@
       </nav>
 
       <div id="page-wrapper">
-		<h1>Broker settings <small></small></h1>
+		<h4 id="main-message">Change password <small></small></h4>
 		<div class="alert alert-dismissable alert-warning" id="page-message-box" style="display:none;">
           <button type="button" class="close" data-dismiss="alert">×</button>
           <h4 id="page-message-box-h4"></h4>
@@ -66,22 +66,25 @@
         </div>
 		<div class="row">
 		  
-          <div class="col-lg-12">
-
-            <form role="form" action="/save-index" method="post">
-
+          <div class="col-lg-12" id="save-form" >
+            <form role="form" action="/save-password" method="post">
               <div class="form-group">
-                <label>Name</label>
-                <input class="form-control" id="vendor-name" name="name">
+                <label>Old password</label>
+                <input type="password" class="form-control" id="old-password" name="old">
               </div>
-		      
-			  <div class="form-group">
-                <label>GUID</label>
-                <input class="form-control" id="vendor-guid" name="guid">
+
+              <div class="form-group" id="new-group">
+                <label>New password</label>
+                <input type="password"  class="form-control" id="new-password" name="new">
+              </div>
+
+              <div class="form-group" id="verify-group">
+                <label>Verify password</label>
+                <input type="password"  class="form-control" id="verify-password" name="verify">
               </div>
 		
 			  <div align="right">
-			  <button type="submit" class="btn btn-primary">Save</button>
+			  <a type="button" href="#" onclick="checkPassword()" class="btn btn-primary">Save</a>
 			  </div>
 			</form>
 			</div>
@@ -102,11 +105,12 @@
 			port: window.location.port ? window.location.port : 80
 		};
 	
-		function getBrokerInfo(call_func)
+		function updatePassword(old_password, new_password, call_func)
 		{
+			//I don't like this. Anyone with a packet sniffer could just intercept the passwords. Will need to https the site.
 			$.ajax({
 	                 dataType: 'jsonp',
-	                 data: "action=getBrokerInfo",                      
+	                 data: "action=updatePassword&old=" + old_password + "&new=" + new_password,                      
 	                 jsonp: 'callback',
 	                 url: 'http://'+ broker.host + ":"+ broker.port+'/admin-ui?callback=?',                     
 	                 success: function callback(data) {
@@ -114,12 +118,45 @@
 			}});
 		}
 	
-		//Update form
-		getBrokerInfo(function(data)
+		function checkPassword()
 		{
-			document.getElementById("vendor-name").value = data['vendor'];
-			document.getElementById("vendor-guid").value = data['guid'];
-		});
+			var old_p = document.getElementById("old-password").value;
+			var pass1 = document.getElementById("new-password").value;
+  		  	var pass2 = document.getElementById("verify-password").value;
+
+			if (pass1 != "" && pass1 == pass2)
+			{
+				//Submit using ajax so we can handle errors
+				updatePassword(old_p, pass1, function(data) {
+					if (data['success'] == true)
+					{
+						document.getElementById("save-form").style.display = "none";
+						document.getElementById("main-message").innerHTML = "Password successfully changed.";
+					}
+					else
+					{
+						document.getElementById("new-group").className = "form-group has-error";
+						document.getElementById("new-password").focus();
+					}
+				});
+				return;
+			}
+			if (pass1 == "")
+			{
+				document.getElementById("verify-group").className = "form-group has-error";
+				document.getElementById("new-group").className = "form-group has-error";
+				document.getElementById("new-password").focus();
+			}
+			else
+			{
+				document.getElementById("new-group").className = "form-group has-success";
+				document.getElementById("verify-group").className = "form-group has-error";
+				document.getElementById("verify-password").focus();
+			}
+		}
+
+		//Update form
+		document.getElementById("old-password").focus();
 	</script>
 
     <!-- Page Specific Plugins -->

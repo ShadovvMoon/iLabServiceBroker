@@ -38,6 +38,11 @@ config.serverSecret = 'someSecret';
 config.supportedFunctions = ["getBrokerInfo", "getLabList", "getLabStatus", "getLabConfiguration", "getExperimentStatus", "getEffectiveQueueLength", "retrieveResult", "cancel", "submit", "validate"];
 
 //Authentication plugins
+/*
+config.auth_plugins.push({
+	name:			"noauth",
+	file:			"noauth.js"
+});*/
 config.auth_plugins.push({
 	name:			"admin",
 	file:			"admin.js"

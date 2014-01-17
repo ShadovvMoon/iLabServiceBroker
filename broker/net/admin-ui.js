@@ -23,8 +23,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
+var fs 	   = require('fs');
 var config = require("../config.js");
+
 var root = module.exports;
 function create(app, server, passport, storage)
 {
@@ -33,12 +34,54 @@ function create(app, server, passport, storage)
 	var servers = storage['servers'];
 	var wrappers = storage['wrappers'];
 
+	function warningMessage(req)
+	{
+		if (req.user.hash == '22757090786eb727f84781d3e7ec71d1cd9b8f60')
+			return warningJavascript(true, "Admin login", 'It appears you are using the default admin login. Please change your password <a href=\'/profile\'>here</a>');
+		return "";
+	}
+
+	function warningJavascript(show_warning, warning_title, warning_message)
+	{
+		var js = "";
+		if (show_warning)
+		{
+			js+='<script type="text/javascript">';
+			js+='document.getElementById("page-message-box-h4").innerHTML = "' + warning_title + '";';
+			js+='document.getElementById("page-message-box-p").innerHTML = "' + warning_message + '";';
+			js+='document.getElementById("page-message-box").style.display = "block";';
+			js+='</script>';
+		}
+		return js;
+	}
+
 	//Global commands
 	app.get('/logout', function (req, res)
 	{
 		req.logout();
 		res.redirect("/login");
 	});
+
+	function render_page(req,res,page_data,show_warning)
+	{
+		res.writeHead(200, { 'Content-Type': 'text/html'});
+		res.write('<!DOCTYPE html><html><head lang="en">');		
+		res.write(page_data);
+
+		if (show_warning)
+			res.write(warningMessage(req));
+
+		res.write('</body></html>');
+		res.end();
+		return;
+	}
+
+	function render_admin_page_data(data,show_warning,req,res)
+	{
+		if (req.user)
+			return render_page(req,res,data,show_warning);
+		return res.redirect("/");
+	}
 
 	function render_admin_page(name,req,res)
 	{
@@ -54,14 +97,20 @@ function create(app, server, passport, storage)
 			render_admin_page('login', req, res);
 		});
 
-		app.get('/', function(req, res, next)
+		fs.readFile('net/ui/views/admin/html/admin.html',function (err, page_admin_data)
 		{
-			if (req.user)
-				return res.render('admin/admin');
-			else
-				return res.render('login');
+			app.get('/', function(req, res, next)
+			{
+				if (req.user)
+				{
+					render_page(req,res,page_admin_data, true);
+					//return res.render('admin/admin');
+				}
+				else
+					return res.render('login');
+			});
 		});
-	
+
 		app.post('/', passport.authenticate('local'), function (req, res)
 		{
 			res.redirect("/");
@@ -81,26 +130,51 @@ function create(app, server, passport, storage)
 
 	//Users page
 	//------------------------
+	fs.readFile('net/ui/views/admin/html/admin-user.html',function (err, page_profile_data)
+	{
 		app.get('/user', function(req, res, next)
 		{
-			render_admin_page('admin/user'	, req, res);
+			render_admin_page_data(page_profile_data, true, req, res);
 		});
+	});
+
+	//My account page
+	//------------------------
+	fs.readFile('net/ui/views/admin/html/admin-profile.html',function (err, page_wrapper_data)
+	{
+		app.get('/profile', function(req, res, next)
+		{
+			render_admin_page_data(page_wrapper_data, false, req, res);
+		});
+	});
+
 
 	//Wrappers page
 	//------------------------
+	fs.readFile('net/ui/views/admin/html/admin-wrappers.html',function (err, page_wrapper_data)
+	{
 		app.get('/wrappers', function(req, res, next)
 		{
-			render_admin_page('admin/wrappers'	, req, res);
+			render_admin_page_data(page_wrapper_data, true, req, res);
 		});
+	});
 
-	
+		app.post('/delete-wrapper', function(req, res)
+		{
+			if (req.user)
+			{
+				var old_id = req.body['hidden-identifier'];
+				wrappers.remove(old_id);
+			}
+
+			render_admin_page('admin/wrappers', req, res);
+		});	
+
 		//Saving
 		app.post('/save-wrapper', function(req, res)
 		{
 			if (req.user)
 			{
-				console.log(req.body);
-
 				//Update core values
 				var old_id = req.body['hidden-identifier'];
 				var name = req.body['name'];
@@ -157,26 +231,34 @@ function create(app, server, passport, storage)
 
 	//Stats page
 	//------------------------
+	fs.readFile('net/ui/views/admin/html/admin-stats.html',function (err, page_stats_data)
+	{
 		app.get('/stats', function(req, res, next)
 		{
-			render_admin_page('admin/stats'	, req, res);
+			render_admin_page_data(page_stats_data, true, req, res);
 		});
+	});
 
 
 	//Debug page
 	//------------------------
+	fs.readFile('net/ui/views/admin/html/admin-debug.html',function (err, page_debug_data)
+	{
 		app.get('/debug', function(req, res, next)
 		{
-			console.log("Rendering debug");
-			render_admin_page('admin/debug'	, req, res);
+			render_admin_page_data(page_debug_data, true, req, res);
 		});
-
+	});
+	
 	//Servers page
 	//------------------------
+	fs.readFile('net/ui/views/admin/html/admin-servers.html',function (err, page_server_data)
+	{
 		app.get('/servers', function(req, res, next)
 		{
-			render_admin_page('admin/servers', req, res);
+			render_admin_page_data(page_server_data, true, req, res);
 		});
+	});
 
 		app.get('/admin-ui', function(req, res)
 		{

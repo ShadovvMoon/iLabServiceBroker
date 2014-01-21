@@ -29,10 +29,9 @@ var config = {}
 module.exports = config;
 config.auth_plugins = [];
 //-----------------------------
-
 //hash information
-config.salt = 'ytgfvbnmjkhgcxdsertgvbnhjytfcxsrtghjuyyutrfgbvcxdffgh';
-config.serverSecret = 'someSecret';
+config.salt = '';
+config.serverSecret = '';
 
 //Functions
 config.supportedFunctions = ["getBrokerInfo", "getLabList", "getLabStatus", "getLabConfiguration", "getExperimentStatus", "getEffectiveQueueLength", "retrieveResult", "cancel", "submit", "validate"];

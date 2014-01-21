@@ -227,26 +227,32 @@ function start()
 	console.log("");
 	console.log("iLab Service");
 	console.log("Version: 1.0");
-	console.log("  Build: 4");
-	console.log("   Date: 12/12/2013");
+	console.log("  Build: 5");
+	console.log("   Date: 21/1/2014");
 	console.log("");
+
+	//Main broker port
+	var default_port = 8080;
+	var broker_port = server_settings.get('broker-port');
+	if (!broker_port)
+		broker_port = default_port;
 
 	//Initilisation functions
 	//-------------------------------
 	var secret = 'Some secret thingo';//'''+crypto.randomBytes(64)+'';
 	app.configure(function(){
-		app.set('port', 8080);
-
+		app.set('port', broker_port);
 
 		if (config.show_requests)
 		{
 			app.use(express.logger("dev"));
 		}
 
-
+		var cookieName = 'broker' + broker_port;
 		app.use(express.cookieParser());
 		app.use(express.bodyParser());
-		app.use(express.session({ secret: secret }));
+		app.use(require('session-middleware').middleware( secret, cookieName ));
+		//app.use(express.session({ secret: secret }));
 		app.use(passport.initialize());
 		app.use(passport.session());
 		app.use(express.methodOverride());
@@ -289,6 +295,9 @@ function start()
 	//-------------------------------
 	if (!server_settings.get('vendor-name'))
 		server_settings.set('vendor-name', 'Default name');
+
+	if (!server_settings.get('broker-port'))
+		server_settings.set('broker-port', default_port);
 
 	if (!server_settings.get('vendor-guid'))
 	{
@@ -432,17 +441,18 @@ function start()
 			sendReplyToClient(client, {error: error_message});
 		else
 		{
-			var selected_server = lab_list[json['id']];
+			var server_id = json['id'];
+			var selected_server = lab_list[server_id];
+
 			if (selected_server)
 			{
 				var responseFunction = (function(lab_id, response_client)
 				{
 	          		return function(obj, err)
 			 		{
-				  	 sendReplyToClient(response_client, obj);
+				  	 	sendReplyToClient(response_client, obj);
 	            	};
 	       		})(json['id'], client);
-
 				switch(json.action)
 				{
 					case "getLabConfiguration":
@@ -464,8 +474,28 @@ function start()
 						selected_server.retrieveResult(json['experimentID'], responseFunction);
 						break;
 					case "submit":
-						selected_server.submit(json['experimentID'], json['experimentSpecification'], 'default', 0, responseFunction);
+					{
+						//Increase the experiment id number
+						var server_datastore = servers_database.get(server_id);
+						if (server_datastore)
+						{
+							var experimentID = server_datastore['next_id'];
+							if (!experimentID) //Called if null or zero..
+								experimentID = 0;							
+						
+							//Increment the experiment database
+							server_datastore['next_id'] = experimentID+1;
+							servers_database.set(server_id, server_datastore);
+
+							//Submit the experiment
+							selected_server.submit(experimentID, json['experimentSpecification'], 'default', 0, responseFunction);
+						}
+						else
+						{
+							console.log("Critical database error");
+						}
 						break;
+					}
 					case "validate":
 						selected_server.validate(json['experimentSpecification'], 'default', responseFunction);
 						break;

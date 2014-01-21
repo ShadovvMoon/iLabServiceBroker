@@ -44,6 +44,12 @@ config.plugins.push({
 	name: "blackboard",
 	settings: {consumer_key: '', shared_secret: ''}
 });
+/*config.plugins.push({
+	name:			"facebook",
+	settings:		{clientID: '',
+					clientSecret: '',
+					 callbackURL: "http://"+config.wrapper_host+":"+config.wrapper_port+"/facebook"}
+});*/
 /*
 config.plugins.push({
 	name: "noauth",

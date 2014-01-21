@@ -1,0 +1,242 @@
+	<title>jsonp test</title> 
+	<link href="public/stylesheets/bootstrap_new.min.css" rel="stylesheet" type="text/css">
+	<link href="public/stylesheets/style.css" rel="stylesheet" type="text/css"> 
+	<script src="http://code.jquery.com/jquery-1.9.1.min.js"></script>
+	<span type="hidden" id="token-string"></span>
+	<script src="public/javascripts/agent.js" type="text/javascript"></script>
+    <script type="text/javascript">
+		var lab_id = "Radioactivity 1";
+		var is_running = false;
+		function runExperiment()
+		{
+			//CreateXmlSpecification
+			var selected_source_name = document.getElementById("source-list").value;
+			var selected_duration = document.getElementById("experiment-duration").value;
+			var selected_repeats = document.getElementById("experiment-repeats").value;
+
+			var xml_string = "";
+			xml_string = addToXml(xml_string, "setupName", "Radioactivity versus Distance");
+			xml_string = addToXml(xml_string, "setupId", "RadioactivityVsDistance");
+			xml_string = addToXml(xml_string, "sourceName", selected_source_name);
+			xml_string = addToXml(xml_string, "absorberName", "None");
+			xml_string = addToXml(xml_string, "distance", "15,20");
+			xml_string = addToXml(xml_string, "duration", selected_duration);
+			xml_string = addToXml(xml_string, "repeat", selected_repeats);
+
+			//First validate the experiment
+			var runButton = document.getElementById("run-experiment-button");
+			if (is_running)
+			{
+				
+				runButton.innerHTML  = "Submitting Experiment...";
+				runButton.className  = "btn btn-success disabled";
+				submitExperiment(lab_id, '1', xml_string, function(data)
+				{
+					console.log(data);
+					if (data['vReport'][0]['accepted'] == 'true')
+					{
+						runButton.innerHTML = "Submitted";
+						//runButton.style.display = 'none';
+					}
+				})
+			}
+			else
+			{
+				var runButton = document.getElementById("run-experiment-button");
+				runButton.innerHTML  = "Validating...";
+				runButton.className  = "btn btn-primary disabled";
+	
+				console.log(xml_string);
+			
+				validateExperiment(lab_id, '1', xml_string, function(data)
+				{
+					if (data['accepted'] == 'true')
+					{
+						runButton.innerHTML = "Run Experiment";
+						runButton.className = "btn btn-success";
+
+						is_running = true;
+					}
+					else
+					{
+						runButton.innerHTML = "Validation failed";
+						runButton.className = "btn btn-primary";
+					}
+				});
+			}
+		}
+
+		var refresh_counter = 0;
+		var wait_time = 0;
+		function updateWait()
+		{
+			wait_time--;
+			if (wait_time < 0)
+				wait_time = 0;
+
+			var timer = document.getElementById('wait_timer');
+			if (timer != null)
+			{
+				timer.innerHTML = "Wait: "+ wait_time;
+
+				refresh_counter++;
+				if (refresh_counter >= 10)
+				{
+					refresh_counter=0;
+
+					//Update the status message
+					getLabStatus(lab_id, function(status)
+					{
+						getEffectiveQueueLength(lab_id, function(queue)
+						{
+							//Update the queue length
+							var status_message = document.getElementById('status_message');
+							if (status_message != null)
+							{
+								status_message.innerHTML = status["labStatusMessage"];
+							}
+			
+							var queue_length = document.getElementById('queue_length');
+							if (queue_length != null)
+							{
+								queue_length.innerHTML = "Size: " + queue["effectiveQueueLength"];
+							}
+
+							wait_time = queue["estWait"];
+						});
+					});
+				}
+			}
+		}
+
+		getBrokerInfo(function(data)
+		{
+			getLabList(function(labs)
+			{
+				//document.getElementById("page-name").innerHTML = data["vendor"];
+
+				//Which option is selected?
+				
+		
+				getLabConfiguration(lab_id, function(configuration)
+				{
+					getLabStatus(lab_id, function(status)
+					{
+						getEffectiveQueueLength(lab_id, function(queue)
+						{
+							var labConfig = configuration['labConfiguration'];
+							var labName = labConfig['$']['title'];
+					
+							var textHtml = "<br/><br/>";
+		
+							//Add any photos for the laboritory
+							var labCamera = labConfig['navmenuPhoto'];
+							for (var i = 0; i < labCamera.length; i++)
+							{
+								var urls = labCamera[i]['image'];
+								for (var a = 0; a < urls.length; a++)
+								{
+									textHtml+= "<img src=\""+ urls[a]+"\"/> ";
+								}
+							}
+							textHtml+= "<br/>";
+							textHtml+= "<br/>";
+					
+							//Add any lab camera links
+							var labCamera = labConfig['labCamera'];
+							for (var i = 0; i < labCamera.length; i++)
+							{
+								var hasLink = false; 
+								var urls = labCamera[i]['url'];
+								for (var a = 0; a < urls.length; a++)
+								{
+									if (urls[a] != "")
+									{
+										if (!hasLink)
+										{
+											textHtml+= "Live camera " + (i+1) + ": ";
+										}
+						
+										textHtml+= "<a href=\""+ urls[a]+"\">link</a><br/>";
+										hasLink = true;
+									}
+								}
+					
+								if (hasLink)
+								{
+									textHtml+= "<br/>";
+								}
+							}
+					
+							//Add status messages
+							console.log(configuration);
+
+							wait_time = queue["estWait"];
+							textHtml+= "<p><b>Queue</b><br/><span id=\"queue_length\">Size: "+queue["effectiveQueueLength"]+"</span><br/><span id=\"wait_timer\">Wait: "+queue["estWait"]+"</span></p>";
+							textHtml+= "<p><b>Status</b><br/><span id=\"status_message\">"+ status["labStatusMessage"]+"</span></p>";
+		
+							$('div.progress').hide();
+					    	$('strong.message').text(labName);
+							$('normal.text').html(textHtml);
+					    	$('div.alert').show();
+						});
+					});
+				});
+			});
+		});
+
+		//Regular updates to the wait time
+		setInterval(updateWait,1000);
+		
+    </script>
+</head>
+<body>
+	<div class="container" style="width:635px">
+		<!--<div class="row">
+			<div class="span12">
+
+					<legend id="page-name"style="width:635px">Welcome, Sam Colbran</legend>
+		
+			</div>
+		</div>-->
+		<br/>
+		<div class="row">
+		<div class="alert alert-info" style="height:400px; width:585px">
+			<div class="col-md-5" style="width:230px;float:left;">
+				<font size="4"><strong class="message"></strong></font>
+				<normal class="text"></normal>
+			</div>
+			<div class="col-md-7" style="width:322px;float:left;"><span id="experiment-setup">
+					<font size="4"><strong>Setup Experiment</strong></font>
+					<br/><br/>
+					<form role="form">
+					<div style="margin-bottom:0px" class="form-actions" >
+						<div class="form-group">
+							<label>Source</label>
+							<select id="source-list" class="form-control" name="Experiments" id="experiment" style="margin-bottom:0px;">
+								<option>Strontium-90</option>
+							</select>
+						</div>
+						<div class="row">
+							<div class="col-md-4" style="width:100px;float:left;">
+								<label>Duration</label>
+								<input id="experiment-duration" class="form-control" type="text" style="width:100%" value="5">
+							</div>
+							<div class="col-md-4" style="width:100px;float:left;">
+								<label>Repeat</label>
+								<input id="experiment-repeats" class="form-control" type="text" style="width:100%" value="3">
+							</div>
+						</div>
+					</div>
+					<br/>
+					<div style="margin-top:0px; margin-bottom:0px" class="form-actions">
+					<div align="right"><button style="width:100%" onclick="runExperiment()" id="run-experiment-button" type="button" value="Validate Experiment" class="btn btn-primary">Validate Experiment</button>
+					</div></div>
+					</form>
+				</span>
+			</div>
+	</div>
+	
+	<script src="http://code.jquery.com/jquery-1.9.1.min.js"></script>
+	<script src="public/javascripts/bootstrap_new.min.js"></script>     
+	<script src="public/javascripts/script.js"></script>  

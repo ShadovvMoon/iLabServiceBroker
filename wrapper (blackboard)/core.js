@@ -150,10 +150,8 @@ module.exports.createWrapper = (function (app,host,port,callback)
 			app.use(express.cookieParser());
 			app.use(express.bodyParser());
 		
-			
-			var cookieName = hmacsha1(secret, 'agentCookies' + config.wrapper_port);
-			app.use(require('session-middleware').middleware( secret, cookieName ));
-	  		//app.use(express.session({secret: secret}));		  	
+			var cookieName = 'agentCookies' + config.wrapper_port;
+	  		app.use(express.session({secret: secret, key: cookieName}));		  	
 			
 			app.use(passport.initialize());
 			app.use(passport.session());

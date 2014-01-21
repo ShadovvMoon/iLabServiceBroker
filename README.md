@@ -37,6 +37,7 @@ npm install request
 npm install session-middleware
 npm install xmlhttprequest
 npm install pkginfo
+npm install passport-facebook
 ```
 
 ####Notes

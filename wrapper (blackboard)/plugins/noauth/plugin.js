@@ -24,33 +24,30 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-var config = {}
-module.exports = config;
-config.plugins = [];
-//-----------------------------
+var fs 		= require('fs');
+(function () {
+    var root = module.exports;
+	function setupPlugin(core, settings)
+	{
+		var app = core.app;
+		var plugin_port = app.get('port');
 
-//Broker connection
-config.broker_host   = 'localhost';
-config.broker_port   = 8080;
+ 		//Read the blackboard plugin html
+		fs.readFile('plugins/blackboard/html/index.html',function (err, html_data)
+		{
+			if (err)
+				console.log(err);
 
-//Agent info
-config.wrapper_uid   = '';
-config.wrapper_key   = '';
-config.wrapper_host  = 'localhost';
-config.wrapper_port  = 3000;
-
-//Plugins
-config.plugins.push({
-	name: "blackboard",
-	settings: {consumer_key: '', shared_secret: ''}
-});
-/*
-config.plugins.push({
-	name: "noauth",
-	settings: {}
-});
-*/
-
-//Other
-config.allow_debug   = false; //Enable debug page
-config.show_requests = false; //Show Express requests
+			app.get('/noauth', function (req, res)
+			{
+				res.writeHead(200, { 'Content-Type': 'text/html'});
+				res.write('<html><head>');		
+				res.write(core.javascriptToken("test"));	
+				res.write(html_data);
+				res.write('</body></html>');
+				res.end();
+		 	});
+		});
+	}
+	root.setupPlugin = setupPlugin;
+})();

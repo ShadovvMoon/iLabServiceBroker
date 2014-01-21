@@ -20,11 +20,22 @@ npm install oauth
 npm install passport
 npm install passport-local
 npm install passport-http-2legged-oauth
+npm install session-middleware
 npm install passport-facebook
 npm install caterpillar
 npm install underscore
 npm install promise
 npm install xmldoc
+npm install pkginfo
+```
+
+####agent
+```
+npm install express
+npm install passport
+npm install request
+npm install session-middleware
+npm install xmlhttprequest
 npm install pkginfo
 ```
 
@@ -35,9 +46,11 @@ I will make package.json files in later commits. Some dependencies are not requi
 ```
 node index.js
 
-Navigate to localhost:8080 in your browser.
+For the broker, navigate to localhost:8080 in your browser.
 Default admin login
 Username: admin
 Password: password
+
+For the agent, complete the config.js file. You will need to authorise the agent in the broker admin utility.
 ```
 

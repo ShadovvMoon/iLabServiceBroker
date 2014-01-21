@@ -177,8 +177,6 @@ return self.error(err); }
 		{
             var key = consumerSecret + '&';
             if (tokenSecret) { key += tokenSecret; }
-
-			console.log(base);
             var computedSignature = utils.hmacsha1(key, base);
 
             if (signature !== computedSignature)
@@ -205,14 +203,13 @@ return self.error(err); }
 
         // If execution reaches this point, the request signature has been
         // verified and authentication is successful.
-		console.log(body);
         if (self._validate) {
             // Give the application a chance it validate the timestamp and nonce, if
             // it so desires.
             self._validate(timestamp, nonce, consumer, req, function(err, valid) {
                 if (err) { return self.error(err); }
                 if (!valid) { return self.fail(self._challenge('nonce_used')); }
-				console.log("Success " +JSON.stringify(consumer) + " " + JSON.stringify(info));
+				console.log("OAuth success " +JSON.stringify(consumer) + " " + JSON.stringify(info));
                 return self.success(consumer, info);
             });
         } else {

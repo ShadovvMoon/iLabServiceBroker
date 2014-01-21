@@ -3,116 +3,8 @@
 	<link href="public/stylesheets/style.css" rel="stylesheet" type="text/css"> 
 	<script src="http://code.jquery.com/jquery-1.9.1.min.js"></script>
 	<span type="hidden" id="token-string"></span>
+	<script src="public/javascripts/agent.js" type="text/javascript"></script>
     <script type="text/javascript">
-		//------------------------------------------------------------------------------------------------
-		//Methods to interact with the nodejs service broker.
-		var broker = {
-			host: "localhost",
-			port: 3000
-		};
-		//------------------------------------------------------------------------------------------------
-		//call_func = function(data)
-		//data keys: "vendor"
-
-		function tokenString()
-		{
-			var token = token_string;
-			return '&uid=' + token['u'] + '&token=' + token['t'];
-		}
-
-		function getBrokerInfo(call_func)
-		{
-			$.ajax({
-                    dataType: 'jsonp',
-                    data: "action=getBrokerInfo"+tokenString(),          
-                    jsonp: 'callback',
-                    url: 'http://'+ broker.host + ":"+ broker.port+'/lti-jsonp?callback=?',                     
-                    success: function callback(data) {
-						call_func(data);
-					}
-               	});
-		}	
-		//call_func = function(data)
-		//data is an a array with lab identifiers
-		function getLabList(call_func)
-		{
-			$.ajax({
-                    dataType: 'jsonp',
-                    data: "action=getLabList"+tokenString(),                        
-                    jsonp: 'callback',
-                    url: 'http://'+ broker.host + ":"+ broker.port+'/lti-jsonp?callback=?',                     
-                    success: function callback(data) {
-						call_func(data);
-					}
-               	});
-		}
-		function getLabConfiguration(lab_id, call_func)
-		{
-			$.ajax({
-                    dataType: 'jsonp',
-                    data: "action=getLabConfiguration&id="+lab_id+tokenString(),                         
-                    jsonp: 'callback',
-                    url: 'http://'+ broker.host + ":"+ broker.port+'/lti-jsonp?callback=?',                     
-                    success: function callback(data) {
-						call_func(data);
-					}
-               	});
-		}
-		function getLabStatus(lab_id, call_func)
-		{
-			$.ajax({
-                    dataType: 'jsonp',
-                    data: "action=getLabStatus&id="+lab_id+tokenString(),                        
-                    jsonp: 'callback',
-                    url: 'http://'+ broker.host + ":"+ broker.port+'/lti-jsonp?callback=?',                     
-                    success: function callback(data) {
-						call_func(data);
-					}
-               	});
-		}
-		function getEffectiveQueueLength(lab_id, call_func)
-		{
-			$.ajax({
-                    dataType: 'jsonp',
-                    data: "action=getEffectiveQueueLength&id="+lab_id+tokenString(),                        
-                    jsonp: 'callback',
-                    url: 'http://'+ broker.host + ":"+ broker.port+'/lti-jsonp?callback=?',                     
-                    success: function callback(data) {
-						call_func(data);
-					}
-               	});
-		}
-		function validateExperiment(lab_id, experimentID, experimentSpecification, call_func)
-		{
-			$.ajax({
-                    dataType: 'jsonp',
-                    data: "action=validate&id="+lab_id + "&experimentSpecification="+ experimentSpecification+"&experimentID="+ experimentID+tokenString(),                        
-                    jsonp: 'callback',
-                    url: 'http://'+ broker.host + ":"+ broker.port+'/lti-jsonp?callback=?',                     
-                    success: function callback(data) {
-						call_func(data);
-					}
-               	});
-		}
-		function submitExperiment(lab_id, experimentID, experimentSpecification, call_func)
-		{
-			$.ajax({
-                    dataType: 'jsonp',
-                    data: "action=submit&id="+lab_id + "&experimentSpecification="+ experimentSpecification+"&experimentID="+ experimentID+tokenString(),                       
-                    jsonp: 'callback',
-                    url: 'http://'+ broker.host + ":"+ broker.port+'/lti-jsonp?callback=?',                     
-                    success: function callback(data) {
-						call_func(data);
-					}
-               	});
-		}
-		function addToXml(xml, key, val, type)
-		{
-			xml += ("<"+ key + ">"+ val + "</"+ key + ">");
-			return xml;
-		}
-
-		//------------------------------------------------------------------------------------------------
 		var lab_id = "Radioactivity 1";
 		var is_running = false;
 		function runExperiment()
@@ -217,7 +109,6 @@
 			}
 		}
 
-		//------------------------------------------------------------------------------------------------
 		getBrokerInfo(function(data)
 		{
 			getLabList(function(labs)
@@ -296,11 +187,6 @@
 
 		//Regular updates to the wait time
 		setInterval(updateWait,1000);
-
-
-		//------------------------------------------------------------------------------------------------
-		
-
 		
     </script>
 </head>

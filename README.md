@@ -27,6 +27,7 @@ npm install underscore
 npm install promise
 npm install xmldoc
 npm install pkginfo
+npm install xmlhttprequest
 ```
 
 ####agent

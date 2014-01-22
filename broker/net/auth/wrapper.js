@@ -65,13 +65,15 @@ var config = require('../../config');
 						var computedSignature = utils.hmacsha1(key, uid+dictionaryAttribute);
 						if (computedSignature == token)
 						{
-							if (current_time-time_stamp < 10000)
+							if (current_time-time_stamp < 10000 && current_time-time_stamp >= 0) //Needs to be less than ten seconds.
 							{
 								//Do we have permission for the action?
 								var actions = wrapper_database.get(found_id)['function'];
 								var servers = wrapper_database.get(found_id)['server'];
 	
 								var requested_action = req['action'];
+
+								//Are we allowed to perform this action?
 								if (actions[requested_action] != null)
 								{
 									if (actions[requested_action] == 1)
@@ -124,34 +126,35 @@ var config = require('../../config');
 		return false;
 	}
 
+	var access_denied_error = "Access denied. The service broker admin has disabled your access to this feature.";
 	function createAuth(app, server)
 	{
 		//Listener for JSONP
 		app.get('/wrapper-jsonp', function(req, res)
 		{
+			var client = {request:req,
+						 response:res,
+							 json:req.query,
+							 type:'jsonp'};
+
 			if (isAuthenticated(req.query,server))
-			{
-				server.receiveDataFromClient({
-					request:req,
-					response:res,
-					json:req.query,
-					type:'jsonp'
-				},req['uid']);
-			}
+				server.receiveDataFromClient(client,req.query['uid']);
+			else
+				server.sendReplyToClient(client, {error: access_denied_error});
 		});
 	
 		//Listener for JSON
 		app.post('/wrapper-json', function(req, res)
 		{	
+			var client = {request:req,
+						 response:res,
+							 json:req.body,
+							 type:'json'};
+
 			if (isAuthenticated(req.body,server))
-			{
-				server.receiveDataFromClient({
-					request:req,
-					response:res,
-					json: req.body,
-					type:'json'
-					},req['uid']);
-			}
+				server.receiveDataFromClient(client,req.body['uid']);
+			else
+				server.sendReplyToClient(client, {error: access_denied_error});
 		});
 	}
 	function userPermissions()

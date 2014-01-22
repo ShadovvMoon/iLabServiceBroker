@@ -49,9 +49,12 @@ var servers_database = Store('servers');
 var wrapper_database = Store('wrappers');
 
 //Auth
-passport 			= require("passport");
-LocalStrategy 		= require('passport-local').Strategy;
-ConsumerStrategy   	= require('../passport-http-2legged-oauth').Strategy;
+passport             = require("passport");
+LocalStrategy        = require('passport-local').Strategy;
+ConsumerStrategy     = require('../passport-http-2legged-oauth').Strategy;
+
+//Communication
+XMLHttpRequest       = require("xmlhttprequest").XMLHttpRequest;
 
 //Passport
 passport.serializeUser(function(user, done)
@@ -414,6 +417,83 @@ function start()
 		}
 	}
 
+	//Wrapper communication (consider moving this to the wrapper plugin?)
+	//-------------------------------
+	function wrapperForGUID(guid) //Should have used the GUID for the dictionary key...
+	{
+		var wraps = wrapper_database.list();
+		var found_id = null;
+		for (var i = 0; i < wraps.length; i++)
+		{	
+			if (wrapper_database.get(wraps[i])['guid'] == guid)
+			{
+				found_id = wraps[i];
+				break;
+			}
+		}	
+		return found_id;
+	}
+	function hmacsha1(key, text)
+	{
+	   	return crypto.createHmac('sha1', key).update(text).digest('base64')
+	}
+	function sendActionToWrapper(guid, data_dictionary, callback)
+	{
+		var found_id = wrapperForGUID(guid);
+		if (found_id != null)
+		{
+			var wrapper_settings = wrapper_database.get(found_id);
+
+			//Check whether the wrapper has registered
+			var wrapper_host = wrapper_settings['host'];
+			var wrapper_port = wrapper_settings['port'];
+			var protocol = "reply-json";
+			if (wrapper_host && wrapper_port)
+			{
+				require('crypto').randomBytes(48, function(ex, buf)
+				{
+					var secret      = buf.toString('hex');
+					data_dictionary['time-stamp'] = new Date().getTime();
+					data_dictionary['secret'] = secret;
+					data_dictionary['token'] = '';
+			
+					var dictionaryAttribute = JSON.stringify(data_dictionary);
+					var computedSignature = hmacsha1(wrapper_settings['key'], guid+dictionaryAttribute);
+			
+					data_dictionary['token'] = computedSignature;
+			
+					var xhr = new XMLHttpRequest();
+					xhr.open('post',"http://"+ wrapper_host +":"+ wrapper_port +"/"+protocol, true);
+					xhr.setRequestHeader("Content-Type", "application/json");
+					
+					xhr.onerror = function(e)
+					{
+						callback('', xhr.statusText);
+					};
+			
+					xhr.onload = function()
+					{
+						var xmlDoc = xhr.responseText;
+						var jsonResponse = JSON.parse(xmlDoc);
+				
+						callback(jsonResponse, '');
+					}
+			
+					var json_data = JSON.stringify(data_dictionary);
+					xhr.send(json_data);
+				});
+			}
+			else
+			{
+				callback('', 'Wrapper has not registered');
+			}
+		}
+		else
+		{
+			callback('', 'Missing wrapper');
+		}
+	}
+
 	//Client commands
 	//-------------------------------
 	function receiveDataFromClient(client, wrapper_uid)
@@ -436,17 +516,7 @@ function start()
 			}
 			else
 			{
-				var wraps = wrapper_database.list();
-				var found_id = null;
-				for (var i = 0; i < wraps.length; i++)
-				{	
-					if (wrapper_database.get(wraps[i])['guid'] == wrapper_uid)
-					{
-						found_id = wraps[i];
-						break;
-					}
-				}	
-
+				var found_id = wrapperForGUID(wrapper_uid);
 				if (found_id)
 				{
 					var servers = wrapper_database.get(found_id)['server'];
@@ -462,10 +532,36 @@ function start()
 			}
 			sendReplyToClient(client, labList);
 		}
+		else if (json.action == "registerWrapper") //Are we even a wrapper?
+		{
+			if (wrapper_uid != null) //We can assume that the wrapper has already gone through the auth checking
+			{
+				var found_id = wrapperForGUID(wrapper_uid);
+				if (found_id)
+				{
+					var wrapper_settings = wrapper_database.get(found_id);
+					wrapper_settings['host'] = json.wrapper_host;
+					wrapper_settings['port'] = json.wrapper_port;
+					wrapper_database.set(found_id, wrapper_settings);
+					sendActionToWrapper(wrapper_uid, {action:'confirmRegistration'}, function(data,err){
+						if (data.success == true) {	
+							console.log("");
+							sendReplyToClient(client, {success: true});}
+						else
+							sendReplyToClient(client, {error: err});
+					});	
+				}
+			}
+			else //This shouldn't be called for a client. Somebody is probably trying to mess with the broker.
+			{
+				sendReplyToClient(client, {error: "You do not have permission for this action"});
+				return; 
+			}
+		}
 
 		var error_message = error_list[json['id']];
 		if (error_message)
-			sendReplyToClient(client, {error: error_message});
+			sendReplyToClient(client, {error: "An error occured while trying to perform the action. Please contact your service broker admin."});
 		else
 		{
 			var server_id = json['id'];
@@ -554,9 +650,10 @@ function start()
 	//Function hooks
 	//-------------------------------
 	root.receiveAdminDataFromClient = receiveAdminDataFromClient;
-	root.receiveDataFromClient = receiveDataFromClient;
-	root.flushServers = flushServers;
-	root.wrappers = wrapper_database;
+	root.receiveDataFromClient 		= receiveDataFromClient;
+	root.sendReplyToClient 			= sendReplyToClient;
+	root.flushServers 				= flushServers;
+	root.wrappers 					= wrapper_database;
 });
 }
 exports.start = start;

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, Samuel Colbran <contact@samuco.net>
+ * Copyright (c) 2014, Samuel Colbran <contact@samuco.net>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without modification,
@@ -206,6 +206,65 @@ module.exports.createWrapper = (function (app,host,port,callback)
 			}
 		});
 		root.receiveDataFromClient = receiveDataFromClient;
-		callback(root);
+		function isDownstreamAuthenticated(req){
+			if (req){
+				var current_time = new Date().getTime(); //in ms
+				var token         = req['token'];
+				var time_stamp    = req['time-stamp'];
+				var server_secret = req['secret'];
+				req['token'] = '';
+				if (token){
+					var dictionaryAttribute = JSON.stringify(req);
+					var computedSignature = hmacsha1(config.wrapper_key, config.wrapper_uid+dictionaryAttribute);
+					if (computedSignature == token){
+						if (current_time-time_stamp < 10000 && current_time-time_stamp >= 0 && server_secret != ''){
+							var requested_action = req['action'];
+							return true;}
+						else if (config.verbose)
+							console.log("Authentication failed - timeout (" + (current_time-time_stamp)/1000 + ")");}	
+					else if (config.verbose)
+						console.log("Authentication failed - invalid signature");}}
+			return false;}
+		app.get('/reply-jsonp', function(req, res){
+			var client = {request:req,
+						 response:res,
+							 json:req.query,
+							 type:'jsonp'};
+			if (isDownstreamAuthenticated(req.query)) receiveDataFromServer(client);
+			else sendReplyToClient(client, {error: access_denied_error});});
+		app.post('/reply-json', function(req, res){	
+			var client = {request:req,
+						 response:res,
+							 json:req.body,
+							 type:'json'};
+			if (isDownstreamAuthenticated(req.body)) receiveDataFromServer(client);
+			else sendReplyToClient(client, {error: access_denied_error});});
+		function receiveDataFromServer(client){
+			var json = client.json;
+			if (json.action == 'confirmRegistration'){sendReplyToClient(client, {success: true});}}
+		function registerBroker(function_callback)
+		{
+			console.log("Registering agent with broker...");
+			sendActionToServer({action:"registerWrapper",wrapper_host:config.wrapper_host,wrapper_port:config.wrapper_port}, function(data,err){
+				if (data.success == true)
+					console.log("Agent registration successful");
+				else
+				{
+					console.log("Agent registration failed");
+					if (err)
+						console.log(err);
+				}
+				console.log("");
+				function_callback();});
+		}
+		require("http").createServer(app).listen(app.get('port'), function()
+		{
+			console.log("Running on port " + app.get('port'));
+			console.log("");
+			registerBroker(function(){
+				callback(root);
+			});
+		});
+		
 	});
 });

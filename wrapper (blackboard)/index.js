@@ -33,9 +33,6 @@ app.configure(function()
 {
 	require('./core').createWrapper(app,config.broker_host,config.broker_port, function(agent)
 	{
-		require("http").createServer(app).listen(app.get('port'), function()
-		{
-			console.log("Running on port " + app.get('port'));
-		});
+		
 	});
 });

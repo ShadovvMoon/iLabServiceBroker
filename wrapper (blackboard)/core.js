@@ -41,10 +41,15 @@ module.exports.createWrapper = (function (app,host,port,callback)
 		var protocol = "wrapper-json";
 		function sendActionToServer(data_dictionary, callback)
 		{
-			var computedSignature = hmacsha1(config.wrapper_key, config.wrapper_uid);
-			data_dictionary['uid'] 	 = config.wrapper_uid;
+			data_dictionary['time-stamp'] = new Date().getTime();
+			data_dictionary['uid'] = config.wrapper_uid;
+			data_dictionary['token'] = '';
+
+			var dictionaryAttribute = JSON.stringify(data_dictionary);
+			var computedSignature = hmacsha1(config.wrapper_key, config.wrapper_uid+dictionaryAttribute);
+
 			data_dictionary['token'] = computedSignature;
-	
+
 			var xhr = new XMLHttpRequest();
 			xhr.open('post',"http://"+root.host+":"+root.port+"/"+protocol, true);
 			xhr.setRequestHeader("Content-Type", "application/json");

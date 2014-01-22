@@ -416,7 +416,7 @@ function start()
 
 	//Client commands
 	//-------------------------------
-	function receiveDataFromClient(client)
+	function receiveDataFromClient(client, wrapper_uid)
 	{
 		var json = client.json;
 		if (config.verbose) console.log("Received action: " + json.action);
@@ -426,13 +426,40 @@ function start()
 		else if (json.action == "getLabList")
 		{
 			var labList = [];
-
-			var keys = servers_database.list();
-			for (var n=0; n < keys.length; n++)
+			if (wrapper_uid == null)
 			{
-				labList.push(servers_database.get(keys[n]).id);
+				var keys = servers_database.list();
+				for (var n=0; n < keys.length; n++)
+				{
+					labList.push(servers_database.get(keys[n]).id);
+				}
 			}
+			else
+			{
+				var wraps = wrapper_database.list();
+				var found_id = null;
+				for (var i = 0; i < wraps.length; i++)
+				{	
+					if (wrapper_database.get(wraps[i])['guid'] == wrapper_uid)
+					{
+						found_id = wraps[i];
+						break;
+					}
+				}	
 
+				if (found_id)
+				{
+					var servers = wrapper_database.get(found_id)['server'];
+					var keys = servers_database.list();
+
+					for (var n=0; n < keys.length; n++)
+					{
+						var lab_id = servers_database.get(keys[n]).id;
+						if (servers[lab_id] != null && servers[lab_id] == 1)
+							labList.push(servers_database.get(keys[n]).id);
+					}
+				}
+			}
 			sendReplyToClient(client, labList);
 		}
 

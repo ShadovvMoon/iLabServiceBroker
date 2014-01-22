@@ -34,8 +34,14 @@ var config = require('../../config');
 	{
 		if (req)
 		{
-			var uid 	= req['uid'];
-			var token 	= req['token'];
+			var current_time = new Date().getTime(); //in ms
+
+			var uid        = req['uid'];
+			var token      = req['token'];
+			var time_stamp = req['time-stamp'];
+
+			req['token'] = '';
+
 			if (uid && token)
 			{
 				var wrapper_database = server.wrappers;
@@ -55,50 +61,62 @@ var config = require('../../config');
 					var key = wrapper_database.get(found_id)['key'];
 					if (key)
 					{
-						var computedSignature = utils.hmacsha1(key, uid);
+						var dictionaryAttribute = JSON.stringify(req);
+						var computedSignature = utils.hmacsha1(key, uid+dictionaryAttribute);
 						if (computedSignature == token)
 						{
-							//Do we have permission for the action?
-							var actions = wrapper_database.get(found_id)['function'];
-							var servers = wrapper_database.get(found_id)['server'];
-
-							var requested_action = req['action'];
-							if (actions[requested_action] != null)
+							if (current_time-time_stamp < 10000)
 							{
-								if (actions[requested_action] == 1)
+								//Do we have permission for the action?
+								var actions = wrapper_database.get(found_id)['function'];
+								var servers = wrapper_database.get(found_id)['server'];
+	
+								var requested_action = req['action'];
+								if (actions[requested_action] != null)
 								{
-									//Do we have permission for the lab?
-									var requested_server = req['id'];
-									if (requested_server != null)
+									if (actions[requested_action] == 1)
 									{
-										if (servers[requested_server] != null)
+										//Do we have permission for the lab?
+										var requested_server = req['id'];
+										if (requested_server != null)
 										{
-											if (servers[requested_server] == 1)
+											if (servers[requested_server] != null)
 											{
-												if (config.verbose) console.log("Authentication successful");
-												return true; //All good
+												if (servers[requested_server] == 1)
+												{
+													if (config.verbose) console.log("Authentication successful");
+													return true; //All good
+												}
+												else
+												{
+													if (config.verbose) console.log("Authentication failed - server disabled " + requested_server );
+												}
 											}
 											else
 											{
-												if (config.verbose) console.log("Authentication failed - server disabled " + requested_server );
+												return false; //False unless otherwise specified
 											}
 										}
 										else
 										{
-											return false; //False unless otherwise specified
+											return true; //Command doesnt use an id
 										}
 									}
-									else
-									{
-										return true; //Command doesnt use an id
-									}
+								}
+								else
+								{
+									return true; //True unless otherwise specified
 								}
 							}
 							else
 							{
-								return true; //True unless otherwise specified
+								if (config.verbose) console.log("Authentication failed - timeout (" + (current_time-time_stamp)/1000 + ")");
 							}
 						}	
+						else
+						{
+							if (config.verbose) console.log("Authentication failed - invalid signature");
+						}
 					}
 				}
 			}
@@ -118,7 +136,7 @@ var config = require('../../config');
 					response:res,
 					json:req.query,
 					type:'jsonp'
-				});
+				},req['uid']);
 			}
 		});
 	
@@ -132,7 +150,7 @@ var config = require('../../config');
 					response:res,
 					json: req.body,
 					type:'json'
-					});
+					},req['uid']);
 			}
 		});
 	}

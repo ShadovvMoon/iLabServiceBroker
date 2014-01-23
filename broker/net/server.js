@@ -545,7 +545,7 @@ function start()
 					wrapper_database.set(found_id, wrapper_settings);
 					sendActionToWrapper(wrapper_uid, {action:'confirmRegistration'}, function(data,err){
 						if (data.success == true) {	
-							console.log("");
+							console.log("Agent registered " + found_id + " at " + json.wrapper_host + ":" + json.wrapper_port);
 							sendReplyToClient(client, {success: true});}
 						else
 							sendReplyToClient(client, {error: err});

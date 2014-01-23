@@ -32,22 +32,22 @@ var fs 		= require('fs');
 		var app = core.app;
 		var plugin_port = app.get('port');
 
- 		//Read the blackboard plugin html
-		fs.readFile('plugins/blackboard/html/index.html',function (err, html_data)
+		app.get('/noauth', function (req, res)
 		{
-			if (err)
-				console.log(err);
-
-			app.get('/noauth', function (req, res)
+	 		//Read the blackboard plugin html
+			fs.readFile('plugins/facebook/html/index.html',function (err, html_data)
 			{
+				if (err)
+					console.log(err);
+	
 				res.writeHead(200, { 'Content-Type': 'text/html'});
 				res.write('<html><head>');		
 				res.write(core.javascriptToken("test"));	
 				res.write(html_data);
 				res.write('</body></html>');
 				res.end();
-		 	});
-		});
+			});
+	 	});
 	}
 	root.setupPlugin = setupPlugin;
 })();

@@ -26,6 +26,8 @@
 var fs 	   = require('fs');
 var config = require("../config.js");
 
+var supportedFunctions = ["getBrokerInfo", "getLabList", "getLabStatus", "getLabConfiguration", "getExperimentStatus", "getEffectiveQueueLength", "retrieveResult", "cancel", "submit", "validate", "registerWrapper", "registerSimpleWrapper"];
+
 var root = module.exports;
 function create(app, server, passport, storage)
 {
@@ -36,7 +38,11 @@ function create(app, server, passport, storage)
 
 	function warningMessage(req)
 	{
-		if (req.user.hash == '22757090786eb727f84781d3e7ec71d1cd9b8f60')
+		//Calculate a hash based on the salt
+		var shasum = crypto.createHash('sha1'); shasum.update(config.salt); shasum.update("password");
+		var d = shasum.digest('hex');
+
+		if (req.user.hash == d)
 			return warningJavascript(true, "Admin login", 'It appears you are using the default admin login. Please change your password <a href=\'/profile\'>here</a>');
 		return "";
 	}
@@ -123,6 +129,10 @@ function create(app, server, passport, storage)
 			{
 				server_settings.set('vendor-name', req.body['name']);
 				server_settings.set('vendor-guid', req.body['guid']);
+
+				//Force a server update
+				server.flushServers();
+
 				return res.redirect("/");
 			}
 			return res.redirect("/");
@@ -192,7 +202,7 @@ function create(app, server, passport, storage)
 				wrapper_data['key']  = key;
 
 				//Function access
-				var functions = config.supportedFunctions;
+				var functions = supportedFunctions;
 				var keys = Object.keys(req.body);
 				var function_dict = wrapper_data['function'];
 				if (!function_dict)

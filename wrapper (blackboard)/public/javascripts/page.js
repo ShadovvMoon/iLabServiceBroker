@@ -39,13 +39,16 @@ function retreiveResults() //Allows for the inaccuracies of the experiment
 				var results = vector['#text'];
 				var distance = vector['@attributes']['distance'];
 
-				var Sum = 0;
-				var average;
+				var Sum = 0.0;
+				var average = 0.0;
 				var scores = results.split(',');
+				console.log(results);
 				for(var x = 0; x < scores.length; x ++)
 				{
-				 	Sum = Sum + scores[x];  //or Sum += scores[x];
+				 	Sum = Sum + parseFloat(scores[x]);  //or Sum += scores[x];
 				}
+				console.log(Sum);
+				console.log(scores.length);
 				average = Sum / scores.length;  //length of the array scores is in scores.length
 				graph_data.push([distance,average]);
 			}

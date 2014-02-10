@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, Samuel Colbran <contact@samuco.net>
+ * Copyright (c) 2014, Samuel Colbran <contact@samuco.net>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without modification,
@@ -24,42 +24,33 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-
-var sys = require('sys');
-var config = require('../../config');
-
-(function () {
-    var root = module.exports;
-	function createAuth(app, server)
+//This file provides an easy way to modify the behavior of commands.
+function receiveDataFromClient(core, client)
+{
+	//Reject any experiments that take longer than 60 seconds.
+	var allowed_time_seconds = 60;
+	if (client.json.action == 'submit' || client.json.action == 'validate')
 	{
-		//Listener for JSONP
-		app.get('/noauth-jsonp', function(req, res)
-		{
-			console.log("No authentication (jsonp)");
-			server.receiveDataFromClient({
-				request:req,
-				response:res,
-				json:req.query,
-				type:'jsonp'
-			});
-		});
+	   var lab_id = client.json.id;
+	   var specification = client.json.experimentSpecification;
 	
-		//Listener for JSON
-		app.post('/noauth-json', function(req, res)
-		{	
-			console.log("No authentication (json)");
-			server.receiveDataFromClient({
-				request:req,
-				response:res,
-				json: req.body,
-				type:'json'
-				});
-		});
+	   var responseFunction = (function(response_client){
+	        return function(obj, err){
+	           if (obj['accepted'] == true)
+	           {
+	               if (parseInt(obj['estWait']) <= allowed_time_seconds)
+	               {
+	                   if (client.json.action == 'validate')
+	                       core.sendReplyToClient(response_client, obj);
+	                   else
+	                       core.receiveDataFromClient(client);
+	               }
+	               else
+	                   core.rejectDataFromClient(client);
+	           }
+	          };
+	     })(client);
+	   sendActionToServer({id:lab_id, action:'validate', experimentSpecification:specification}, responseFunction);
 	}
-	function userPermissions()
-	{
-
-	}
-	root.createAuth 	 = createAuth;
-	root.userPermissions = userPermissions;
-})();
+}
+module.exports.receiveDataFromClient = receiveDataFromClient;

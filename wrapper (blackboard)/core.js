@@ -24,9 +24,10 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-var config	= require("./config");
-var crypto 	= require('crypto');
-var express = require('express');
+var config	 = require("./config");
+var crypto 	 = require('crypto');
+var express  = require('express');
+var override = require("./override");
 
 XMLHttpRequest = require("xmlhttprequest").XMLHttpRequest;
 module.exports.createWrapper = (function (app,host,port,callback)
@@ -38,6 +39,7 @@ module.exports.createWrapper = (function (app,host,port,callback)
 						   port:port,
 						 secret:secret,
 							app:app};
+
 		var protocol = "wrapper-json";
 		function sendActionToServer(data_dictionary, callback)
 		{
@@ -70,12 +72,10 @@ module.exports.createWrapper = (function (app,host,port,callback)
 			var json_data = JSON.stringify(data_dictionary);
 			xhr.send(json_data);
 		}
-		function hmacsha1(key, text)
-		{
+		function hmacsha1(key, text) {
 	   		return crypto.createHmac('sha1', key).update(text).digest('base64')
 		}
-		function sendReplyToClient(client, data_dictionary)
-		{
+		function sendReplyToClient(client, data_dictionary) {
 			if (client.type == "json")
 			{
 				var json_string = JSON.stringify(data_dictionary);
@@ -88,16 +88,89 @@ module.exports.createWrapper = (function (app,host,port,callback)
 			else
 				console.log("Unknown client protocol");
 		}
-		function receiveDataFromClient(client)
+		function rejectDataFromClient(client)
 		{
-			var responseFunction = (function(response_client)
+			if (client.json.action == "submit")
 			{
-	         	return function(obj, err)
-		 		{
-			  	 	sendReplyToClient(response_client, obj);
-	           	};
-	      	})(client);
-			sendActionToServer(client.json, responseFunction);
+				return sendReplyToClient(client,{
+					vReport:
+					{
+						accepted: false
+					}
+				});
+			}
+			else if (client.json.action == "submit")
+			{
+				return sendReplyToClient(client,{
+					accepted: false,
+					estRuntime: "0"
+				});
+			}
+			return sendReplyToClient(client,{error: "Your request was rejected by the server"});
+		}
+		function receiveDataFromClient(client) {
+			var user = client.json['uid'];
+			if (client.json.experimentID != null) //TODO: Add check for action
+			{
+				if (user != null)
+				{
+					if (client.json.action == "submit")
+					{
+						var responseFunction = (function(response_client)
+						{
+				         	return function(obj, err)
+					 		{
+								//Associate the returned experiment with the user id
+								console.log(JSON.stringify(obj));
+
+								//Reply to the client
+						  	 	sendReplyToClient(response_client, obj);
+				           	};
+				      	})(client);
+						sendActionToServer(client.json, responseFunction);
+					}
+					else
+					{
+						//Check whether this experiment was submitted by this user (or if they have sufficient privlidges to do this action)
+						if (client.json.action == "retrieveResult")
+						{
+							var responseFunction = (function(response_client)
+							{
+					         	return function(obj, err)
+						 		{
+									console.log(JSON.stringify(obj));
+							  	 	sendReplyToClient(response_client, obj);
+					           	};
+					      	})(client);
+							sendActionToServer(client.json, responseFunction);
+						}
+						else
+						{
+							//Pass this action through to the server
+							var responseFunction = (function(response_client)
+							{
+					         	return function(obj, err)
+						 		{
+							  	 	sendReplyToClient(response_client, obj);
+					           	};
+					      	})(client);
+							sendActionToServer(client.json, responseFunction);
+						}
+					}
+				}
+				else return console.log("Invalid user (null)");
+			}
+			else
+			{
+				var responseFunction = (function(response_client)
+				{
+		         	return function(obj, err)
+			 		{
+				  	 	sendReplyToClient(response_client, obj);
+		           	};
+		      	})(client);
+				sendActionToServer(client.json, responseFunction);
+			}
 		}
 		function isAuthenticated(req)
 		{
@@ -185,7 +258,7 @@ module.exports.createWrapper = (function (app,host,port,callback)
 		{
 			if (isAuthenticated(req.query))
 			{
-				receiveDataFromClient({
+				override.receiveDataFromClient(root, {
 					request:req,
 					response:res,
 					json:req.query,
@@ -197,7 +270,7 @@ module.exports.createWrapper = (function (app,host,port,callback)
 		{	
 			if (isAuthenticated(req.body))
 			{
-				receiveDataFromClient({
+				override.receiveDataFromClient(root, {
 					request:req,
 					response:res,
 					json: req.body,
@@ -244,18 +317,36 @@ module.exports.createWrapper = (function (app,host,port,callback)
 			if (json.action == 'confirmRegistration'){sendReplyToClient(client, {success: true});}}
 		function registerBroker(function_callback)
 		{
-			console.log("Registering agent with broker...");
-			sendActionToServer({action:"registerWrapper",wrapper_host:config.wrapper_host,wrapper_port:config.wrapper_port}, function(data,err){
-				if (data.success == true)
-					console.log("Agent registration successful");
-				else
-				{
-					console.log("Agent registration failed");
-					if (err)
-						console.log(err);
-				}
-				console.log("");
-				function_callback();});
+			if (config.simple_wrapper)
+			{
+				console.log("Registering simple agent with broker...");
+				sendActionToServer({action:"registerSimpleWrapper",wrapper_host:config.wrapper_host,wrapper_port:config.wrapper_port}, function(data,err){
+					if (data.success == true)
+						console.log("Simple agent registration successful");
+					else
+					{
+						console.log("Simple agent registration failed");
+						if (err)
+							console.log(err);
+					}
+					console.log("");
+					function_callback();});
+			}
+			else
+			{
+				console.log("Registering agent with broker...");
+				sendActionToServer({action:"registerWrapper",wrapper_host:config.wrapper_host,wrapper_port:config.wrapper_port}, function(data,err){
+					if (data.success == true)
+						console.log("Agent registration successful");
+					else
+					{
+						console.log("Agent registration failed");
+						if (err)
+							console.log(err);
+					}
+					console.log("");
+					function_callback();});
+			}
 		}
 		require("http").createServer(app).listen(app.get('port'), function()
 		{

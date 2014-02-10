@@ -240,6 +240,8 @@ function start()
 	if (!broker_port)
 		broker_port = default_port;
 
+	console.log(broker_port);
+
 	//Initilisation functions
 	//-------------------------------
 	var secret = 'Some secret thingo';//'''+crypto.randomBytes(64)+'';
@@ -335,6 +337,7 @@ function start()
 	//Replies
 	function sendReplyToClient(client, data_dictionary)
 	{
+		console.log(JSON.stringify(data_dictionary));
 		if (client.type == "json")
 		{
 			var json_string = JSON.stringify(data_dictionary);
@@ -500,7 +503,7 @@ function start()
 	{
 		var json = client.json;
 		if (config.verbose) console.log("Received action: " + json.action);
-
+		console.log("Received " + JSON.stringify(json));
 		if (json.action == "getBrokerInfo")
 			sendReplyToClient(client, {vendor: server_settings.get('vendor-name')});
 		else if (json.action == "getLabList")
@@ -532,24 +535,36 @@ function start()
 			}
 			sendReplyToClient(client, labList);
 		}
-		else if (json.action == "registerWrapper") //Are we even a wrapper?
+		else if (json.action == "registerWrapper" || json.action == "registerSimpleWrapper")
 		{
 			if (wrapper_uid != null) //We can assume that the wrapper has already gone through the auth checking
 			{
 				var found_id = wrapperForGUID(wrapper_uid);
 				if (found_id)
 				{
+					var is_simple = (json.action == "registerSimpleWrapper") ? true : false;
+					 
 					var wrapper_settings = wrapper_database.get(found_id);
-					wrapper_settings['host'] = json.wrapper_host;
-					wrapper_settings['port'] = json.wrapper_port;
+					wrapper_settings['host']   = json.wrapper_host;
+					wrapper_settings['port']   = json.wrapper_port;
+					wrapper_settings['simple'] = is_simple;
 					wrapper_database.set(found_id, wrapper_settings);
-					sendActionToWrapper(wrapper_uid, {action:'confirmRegistration'}, function(data,err){
-						if (data.success == true) {	
-							console.log("Agent registered " + found_id + " at " + json.wrapper_host + ":" + json.wrapper_port);
-							sendReplyToClient(client, {success: true});}
-						else
-							sendReplyToClient(client, {error: err});
-					});	
+
+					if (!is_simple)
+					{
+						sendActionToWrapper(wrapper_uid, {action:'confirmRegistration'}, function(data,err){
+							if (data.success == true) {	
+								console.log("Agent registered " + found_id + " at " + json.wrapper_host + ":" + json.wrapper_port);
+								sendReplyToClient(client, {success: true});}
+							else
+								sendReplyToClient(client, {error: err});
+						});	
+					}
+					else
+					{
+						console.log("Simple agent registered " + found_id);
+						sendReplyToClient(client, {success: true});
+					}
 				}
 			}
 			else //This shouldn't be called for a client. Somebody is probably trying to mess with the broker.
@@ -561,7 +576,7 @@ function start()
 
 		var error_message = error_list[json['id']];
 		if (error_message)
-			sendReplyToClient(client, {error: "An error occured while trying to perform the action. Please contact your service broker admin."});
+			sendReplyToClient(client, {error: error_message});
 		else
 		{
 			var server_id = json['id'];
@@ -610,6 +625,9 @@ function start()
 							server_datastore['next_id'] = experimentID+1;
 							servers_database.set(server_id, server_datastore);
 
+							console.log("Submitting experiment to " + json['id']);
+							console.log(json['experimentSpecification']);
+
 							//Submit the experiment
 							selected_server.submit(experimentID, json['experimentSpecification'], 'default', 0, responseFunction);
 						}
@@ -621,6 +639,9 @@ function start()
 					}
 					case "validate":
 						selected_server.validate(json['experimentSpecification'], 'default', responseFunction);
+						break;
+					default:
+						console.log("Invalid action " + json.action);
 						break;
 				}
 			}

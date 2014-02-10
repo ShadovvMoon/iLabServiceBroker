@@ -62,22 +62,26 @@ var facebook_users 	 = Store('users');
 			 	var user = facebook_users.get(profile.id);
 				if (!user)
 				{
-					console.log("New Facebook User: " + profile.displayName);
+					console.log("New Facebook User: " + profile.displayName + " ("+ profile.id+")");
 					user = {id: profile.id, name: profile.displayName}
 
 					facebook_users.set(profile.id, user);
-					return done(null, user);
+					return done(false, false);
 				}
 			 	else
 				{
-					console.log("Welcome back: " + profile.displayName);
-					return done(null, user);
+					if (user['access'] == 'true')
+					{
+						console.log("Welcome back: " + profile.displayName + " ("+ profile.id+")");
+						return done(null, user);
+					}
+					return done(false, false);
 				}
 		  	}
 		));
 
  		//Read the blackboard plugin html
-		fs.readFile('plugins/facebook/html/index.html', function (err, html_data)
+		fs.readFile('plugins/blackboard/html/index.html', function (err, html_data)
 		{
 			if (err)
 				console.log(err);

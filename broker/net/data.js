@@ -24,41 +24,57 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-var config = {}
-module.exports = config;
-config.plugins = [];
-//-----------------------------
+var root 				 = module.exports;
+var experiment_store 	 = require('ministore')('database/experiments');
+var experimentDictionary = {};
 
-//Broker connection
-config.broker_host   = 'localhost';
-config.broker_port   = 8080;
+//Clear the experiment dictionary 
+function flushExperiments()
+{
+	var experiments = Object.keys(experimentDictionary);
+	var i;
+	for (i=0; i < experiments.length; i++)
+	{
+		experimentDictionary[experiments[i]].save();
+	}
+	experimentDictionary={};
+}
 
-//Agent info
-config.wrapper_uid   = '';
-config.wrapper_key   = '';
-config.wrapper_host  = 'localhost';
-config.wrapper_port  = 3000;
+function getExperimentStore(id)
+{
+	//Check if ID is in the experiment dictionary
+	if (id in experimentDictionary && experimentDictionary[id] === undefined) {
+		return experimentDictionary[id];
+	}
+	else {
+		//Request the store and add it to the experiment dictionary
+		var store = experiment_store(id);
+		experimentDictionary[id]=store;
+		return store;
+	}
+}
 
-//Plugins
-config.plugins.push({
-	name: "blackboard",
-	settings: {consumer_key: '', shared_secret: ''}
-});
-/*config.plugins.push({
-	name:			"facebook",
-	settings:		{clientID: '',
-					clientSecret: '',
-					 callbackURL: "http://"+config.wrapper_host+":"+config.wrapper_port+"/facebook"}
-});*/
-/*
-config.plugins.push({
-	name: "noauth",
-	settings: {}
-});
-*/
+function setExperimentValue(id,key,val,callback)
+{
+	var store = root.getExperimentStore(id);
+	store.set(key,val,callback);
+}
 
-//Other
-config.simple_wrapper = false; //Disable talking back to the server. Useful for development on a local machine.
-config.verbose 		  = false;
-config.allow_debug	  = false; //Enable debug page
-config.show_requests  = false; //Show Express requests
+function getExperimentValue(id,key,callback)
+{
+	var store = root.getExperimentStore(id);
+	store.get(key,callback);
+}
+
+function removeExperimentValue(id,key,callback)
+{
+	var store = root.getExperimentStore(id);
+	store.remove(key,callback);
+}
+
+root.getExperimentStore = getExperimentStore;
+root.set 	= setExperimentValue;
+root.get 	= getExperimentValue;
+root.remove = removeExperimentValue;
+root.flush 	= flushExperiments;
+return root;

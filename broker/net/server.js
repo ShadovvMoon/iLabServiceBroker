@@ -24,16 +24,17 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-var root 		= module.exports;
-var http 		= require("http");
-var crypto 		= require('crypto')
-var adminui 	= require("./admin-ui");
-var soap 		= require("./soap");
-var ilab 		= require("./ilab");
-var config 		= require('../config')
-var express 	= require('express');
-var path 		= require('path');
-var fs 			= require('fs');
+var root 			 = module.exports;
+var http 			 = require("http");
+var crypto 			 = require('crypto')
+var adminui 		 = require("./admin-ui");
+var soap 			 = require("./soap");
+var ilab 			 = require("./ilab");
+var experiment_store = require("./data.js");
+var config 			 = require('../config')
+var express 		 = require('express');
+var path 			 = require('path');
+var fs 				 = require('fs');
 
 var app = express();
 
@@ -41,20 +42,34 @@ var plugin_list = {};
 var lab_list 	= {};
 var error_list 	= {};
 
+//Timing functions
+var start_time = process.hrtime();
+var reset_time = function()
+{
+	start_time = process.hrtime(); // reset the timer
+}
+var elapsed_time = function(note)
+{
+    var precision = 3; // 3 decimal places
+    var elapsed = process.hrtime(start_time)[1] / 1000000; // divide by a million to get nano to milli
+    console.log(process.hrtime(start_time)[0] + " s, " + elapsed.toFixed(precision) + " ms - " + note); // print message + time
+    start_time = process.hrtime(); // reset the timer
+}
+
 //Get server information
-var Store 			 = require('ministore')('database')
-var access_users 	 = Store('users');
-var server_settings	 = Store('settings');
-var servers_database = Store('servers');
-var wrapper_database = Store('wrappers');
+var Store 			  = require('ministore')('database')
+var access_users 	  = Store('users');
+var server_settings	  = Store('settings');
+var servers_database  = Store('servers');
+var wrapper_database  = Store('wrappers');
 
 //Auth
-passport             = require("passport");
-LocalStrategy        = require('passport-local').Strategy;
-ConsumerStrategy     = require('../passport-http-2legged-oauth').Strategy;
+passport              = require("passport");
+LocalStrategy         = require('passport-local').Strategy;
+ConsumerStrategy      = require('../passport-http-2legged-oauth').Strategy; 
 
 //Communication
-XMLHttpRequest       = require("xmlhttprequest").XMLHttpRequest;
+XMLHttpRequest        = require("xmlhttprequest").XMLHttpRequest;
 
 //Passport
 passport.serializeUser(function(user, done)
@@ -204,6 +219,7 @@ function flushServers()
 
 function start()
 {
+	if (config.show_performance) elapsed_time("Creating log file hook");
 
 	//Logging and debug information
 	var log_file 	= 'database/debug.log';
@@ -224,6 +240,7 @@ function start()
 		}
 		hook_stdout(logStream);
 	
+	if (config.show_performance) elapsed_time("Starting broker");
 
 	//Start message
 	//-------------------------------
@@ -241,6 +258,8 @@ function start()
 		broker_port = default_port;
 
 	console.log(broker_port);
+
+	if (config.show_performance) elapsed_time("Setting up express");
 
 	//Initilisation functions
 	//-------------------------------
@@ -277,6 +296,8 @@ function start()
 		app.use(express.errorHandler());
 	});
 
+	if (config.show_performance) elapsed_time("Loading admin hashes");
+
 	//Load the admin UI
 	//-------------------------------
 	var shasum = crypto.createHash('sha1'); shasum.update(config.salt); shasum.update('password');
@@ -296,6 +317,8 @@ function start()
 				hash: d});
 	}
 
+	if (config.show_performance) elapsed_time("Checking generic settings");
+
 	//Create the generic settings
 	//-------------------------------
 	if (!server_settings.get('vendor-name'))
@@ -313,6 +336,8 @@ function start()
 	}
 
 	adminui.create(app, root, passport, {'users': access_users, 'settings': server_settings, 'servers': servers_database, 'wrappers': wrapper_database});
+
+	if (config.show_performance) elapsed_time("Loading plugins");
 
 	//Initialise auth plugins
 	//-------------------------------
@@ -334,10 +359,12 @@ function start()
 	//Communication with clients using JSON
 	//-------------------------------
 
+	if (config.show_performance) elapsed_time("Setting up reply functions");
+
 	//Replies
 	function sendReplyToClient(client, data_dictionary)
 	{
-		console.log(JSON.stringify(data_dictionary));
+		if (config.verbose) console.log(JSON.stringify(data_dictionary));
 		if (client.type == "json")
 		{
 			var json_string = JSON.stringify(data_dictionary);
@@ -501,9 +528,16 @@ function start()
 	//-------------------------------
 	function receiveDataFromClient(client, wrapper_uid)
 	{
+
 		var json = client.json;
+		if (config.show_performance)
+		{
+			console.log("Measuring action time... (" + json.action + ")");
+			reset_time();
+		}
+
 		if (config.verbose) console.log("Received action: " + json.action);
-		console.log("Received " + JSON.stringify(json));
+		if (config.verbose) console.log("Received " + JSON.stringify(json));
 		if (json.action == "getBrokerInfo")
 			sendReplyToClient(client, {vendor: server_settings.get('vendor-name')});
 		else if (json.action == "getLabList")
@@ -619,17 +653,54 @@ function start()
 						{
 							var experimentID = server_datastore['next_id'];
 							if (!experimentID) //Called if null or zero..
-								experimentID = 0;							
-						
+								experimentID = 0;		
+
+							var idFunction = (function(json, client, wrapper_uid, experimentID)
+							{
+								return function()
+								{
+									//Log this message
+									if (config.verbose) console.log("Submitting experiment to " + json['id']);
+									if (config.verbose) console.log(json['experimentSpecification']);
+		
+									var submitFunction = (function(lab_id, wrapper_uid, response_client)
+									{
+						          		return function(obj, err)
+								 		{
+											//Extract the ID from the lab server
+											var returnedID = obj['experimentID'];
+
+											if (obj['vReport'][0]['accepted'] == 'true')
+											{
+												if (config.verbose) console.log("Experiment " + returnedID + " validated successfully");
+
+												//Associate this experiment with the wrapper (IF a wrapper was used)
+												if (wrapper_uid != null)
+												{
+													if (config.verbose) console.log("Associating experiment " + returnedID + " with " + wrapper_uid);
+													experiment_store.set(lab_id, returnedID, wrapper_uid);
+
+													//Flush the experiment store (to ensure all changes are kept!)
+													experiment_store.flush();
+												}
+											}
+											else
+											{
+												if (config.verbose) console.log("Experiment " + returnedID + " validation failed");
+											}
+
+									  	 	sendReplyToClient(response_client, obj);
+						            	};
+						       		})(json['id'], wrapper_uid, client);
+	
+									//Submit the experiment
+									selected_server.submit(experimentID, json['experimentSpecification'], 'default', 0, submitFunction);
+								};
+				       		})(json, client, wrapper_uid, experimentID);
+
 							//Increment the experiment database
 							server_datastore['next_id'] = experimentID+1;
-							servers_database.set(server_id, server_datastore);
-
-							console.log("Submitting experiment to " + json['id']);
-							console.log(json['experimentSpecification']);
-
-							//Submit the experiment
-							selected_server.submit(experimentID, json['experimentSpecification'], 'default', 0, responseFunction);
+							servers_database.set(server_id, server_datastore, idFunction);
 						}
 						else
 						{
@@ -647,7 +718,7 @@ function start()
 			}
 		}
 
-		
+		if (config.show_performance) elapsed_time("Action completed");
 	}
 
 	//Show an information page
@@ -675,6 +746,8 @@ function start()
 	root.sendReplyToClient 			= sendReplyToClient;
 	root.flushServers 				= flushServers;
 	root.wrappers 					= wrapper_database;
+
+	if (config.show_performance) elapsed_time("Setup complete!");
 });
 }
 exports.start = start;

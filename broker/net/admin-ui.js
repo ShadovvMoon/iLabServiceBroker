@@ -25,6 +25,7 @@
  */
 var fs 	   = require('fs');
 var config = require("../config.js");
+var crypto 			 = require('crypto')
 
 var supportedFunctions = ["getBrokerInfo", "getLabList", "getLabStatus", "getLabConfiguration", "getExperimentStatus", "getEffectiveQueueLength", "retrieveResult", "cancel", "submit", "validate", "registerWrapper", "registerSimpleWrapper"];
 

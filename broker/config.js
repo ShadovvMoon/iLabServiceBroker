@@ -63,3 +63,6 @@ config.show_requests 	= false;
 
 //Load the servers in order (instead of all at once)
 config.flush_ordered 	= false;
+
+//Show time statistics
+config.show_performance = false;

@@ -27,15 +27,17 @@
 //This file provides an easy way to modify the behavior of commands.
 function receiveDataFromClient(core, client)
 {
-	//Reject any experiments that take longer than 60 seconds.
-	var allowed_time_seconds = 60;
+	//Reject any experiments that take longer than 2 minutes.
+	/*var allowed_time_seconds = 120;
 	if (client.json.action == 'submit' || client.json.action == 'validate')
 	{
 	   var lab_id = client.json.id;
 	   var specification = client.json.experimentSpecification;
 	
-	   var responseFunction = (function(response_client){
-	        return function(obj, err){
+	   var responseFunction = (function(response_client)
+	   {
+	        return function(obj, err)
+			{
 	           if (obj['accepted'] == true)
 	           {
 	               if (parseInt(obj['estWait']) <= allowed_time_seconds)
@@ -48,9 +50,18 @@ function receiveDataFromClient(core, client)
 	               else
 	                   core.rejectDataFromClient(client);
 	           }
-	          };
-	     })(client);
-	   sendActionToServer({id:lab_id, action:'validate', experimentSpecification:specification}, responseFunction);
+			   else
+			       core.sendReplyToClient(response_client, obj);
+	        };
+	   })(client);
+	   core.sendActionToServer({id:lab_id, action:'validate', experimentSpecification:specification}, responseFunction);
 	}
+	else
+	{
+		core.receiveDataFromClient(client);
+	}*/
+
+	//Pass through
+	core.receiveDataFromClient(client);
 }
 module.exports.receiveDataFromClient = receiveDataFromClient;

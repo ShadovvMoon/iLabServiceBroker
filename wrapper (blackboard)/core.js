@@ -72,6 +72,7 @@ module.exports.createWrapper = (function (app,host,port,callback)
 			var json_data = JSON.stringify(data_dictionary);
 			xhr.send(json_data);
 		}
+		root.sendActionToServer = sendActionToServer;
 		function hmacsha1(key, text) {
 	   		return crypto.createHmac('sha1', key).update(text).digest('base64')
 		}
@@ -88,6 +89,7 @@ module.exports.createWrapper = (function (app,host,port,callback)
 			else
 				console.log("Unknown client protocol");
 		}
+		root.sendReplyToClient = sendReplyToClient;
 		function rejectDataFromClient(client)
 		{
 			if (client.json.action == "submit")
@@ -108,6 +110,7 @@ module.exports.createWrapper = (function (app,host,port,callback)
 			}
 			return sendReplyToClient(client,{error: "Your request was rejected by the server"});
 		}
+		root.rejectDataFromClient = rejectDataFromClient;
 		function receiveDataFromClient(client) {
 			var user = client.json['uid'];
 			if (client.json.experimentID != null) //TODO: Add check for action
@@ -172,8 +175,10 @@ module.exports.createWrapper = (function (app,host,port,callback)
 				sendActionToServer(client.json, responseFunction);
 			}
 		}
+		root.receiveDataFromClient = receiveDataFromClient;
 		function isAuthenticated(req)
 		{
+			if (config.verbose) console.log("Checking authentication");
 			if (req)
 			{
 				var uid   = req['uid'];
@@ -186,7 +191,10 @@ module.exports.createWrapper = (function (app,host,port,callback)
 					            token =             token.replace("+"," ");
 
 					if (computedSignature == token)
+					{
+						if (config.verbose) console.log("Authentication successful");
 						return true;
+					}
 					else
 					{
 						console.log("Javascript authentication failed (" + uid + "). Incorrect signature: " + computedSignature + " should be " + token);
@@ -197,6 +205,7 @@ module.exports.createWrapper = (function (app,host,port,callback)
 					console.log("Javascript authentication failed (" + uid + "). Missing UUID or Token.");
 				}
 			}
+			if (config.verbose) console.log("Missing request");
 			return false;
 		}	
 		function javascriptToken(uid)

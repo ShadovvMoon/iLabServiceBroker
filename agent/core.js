@@ -220,8 +220,8 @@ module.exports.createWrapper = (function (app,host,port,callback)
 			console.log("");
 			console.log("iLab agent");
 			console.log("Version: 1.0");
-			console.log("  Build: 2");
-			console.log("   Date: 21/1/2014");
+			console.log("  Build: 3");
+			console.log("   Date: 12/2/2014");
 			console.log("");
 		}
 		function setupExpress(secret)

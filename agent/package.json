@@ -1,0 +1,22 @@
+{
+  "name": "ilab-agent",
+  "version": "1.0.0",
+  "description": "A new service that connects to the iLab service broker",
+  "dependencies": {
+    "express": "~3.1.0",
+    "ministore": "*",
+    "passport" : "*",
+    "passport-facebook" : "*",
+    "request" : "*",
+    "pkginfo" : "*",
+    "xmlhttprequest" : "*"
+  },
+  "author": {
+    "name": "Samuel Colbran",
+    "email": "contact@samuco.net"
+  },
+  "engines": {
+    "node": "0.8.x",
+    "npm": "1.1.x"
+  }
+}

@@ -10,24 +10,7 @@ nodejs
 ##Installation
 ####broker
 ```
-npm install express
-npm install form-data
-npm install jade
-npm install xml2js
-npm install alfred
-npm install ministore
-npm install oauth
-npm install passport
-npm install passport-local
-npm install passport-http-2legged-oauth
-npm install session-middleware
-npm install passport-facebook
-npm install caterpillar
-npm install underscore
-npm install promise
-npm install xmldoc
-npm install pkginfo
-npm install xmlhttprequest
+npm install
 ```
 
 ####agent

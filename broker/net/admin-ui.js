@@ -40,7 +40,8 @@ function create(app, server, passport, storage)
 	function warningMessage(req)
 	{
 		//Calculate a hash based on the salt
-		var shasum = crypto.createHash('sha1'); shasum.update(config.salt); shasum.update("password");
+		var salt = server_settings.get('server-salt');
+		var shasum = crypto.createHash('sha1'); shasum.update(salt); shasum.update("password");
 		var d = shasum.digest('hex');
 
 		if (req.user.hash == d)

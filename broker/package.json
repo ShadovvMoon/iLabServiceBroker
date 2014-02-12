@@ -1,10 +1,19 @@
 {
   "name": "ilab-broker",
-  "version": "0.0.1",
+  "version": "1.0.0",
   "description": "a test project to create an ilab broker server",
   "dependencies": {
     "jade": "*",
-    "express": "~3.1.0"
+    "express": "~3.1.0",
+    "ministore": "*",
+    "passport" : "*",
+    "passport-local":"*",
+    "pkginfo":"*",
+    "promise":"*",
+    "underscore":"*",
+    "xml2js":"*",
+    "xmldoc":"*",
+    "xmlhttprequest":"*"
   },
   "author": {
     "name": "Samuel Colbran",

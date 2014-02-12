@@ -24,7 +24,7 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-var easy_soap    = require('../easysoap/index.js');
+var easy_soap    = require('../node_modules_modified/easysoap/index.js');
 var config = require('../config')
 
 module.exports = (function ()

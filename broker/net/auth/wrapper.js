@@ -25,7 +25,7 @@
  */
 
 var sys = require('sys');
-var utils 	= require('../../passport-http-2legged-oauth/lib/utils.js');
+var utils 	= require('../../node_modules_modified/passport-http-2legged-oauth/lib/utils.js');
 var config = require('../../config');
 
 (function () {

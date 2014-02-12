@@ -56,6 +56,14 @@ var elapsed_time = function(note)
     start_time = process.hrtime(); // reset the timer
 }
 
+//Error handling
+process.on('uncaughtException', function(err)
+{
+    // handle the error safely
+    console.error('An uncaughtException was found.');
+    console.log(err);
+});
+
 //Get server information
 var Store 			  = require('ministore')('database')
 var access_users 	  = Store('users');
@@ -66,7 +74,7 @@ var wrapper_database  = Store('wrappers');
 //Auth
 passport              = require("passport");
 LocalStrategy         = require('passport-local').Strategy;
-ConsumerStrategy      = require('../passport-http-2legged-oauth').Strategy; 
+ConsumerStrategy      = require('../node_modules_modified/passport-http-2legged-oauth').Strategy; 
 
 //Communication
 XMLHttpRequest        = require("xmlhttprequest").XMLHttpRequest;
@@ -89,7 +97,8 @@ passport.use(new LocalStrategy
 		var selected_user = access_users.get(username);
 		if (selected_user)
 		{
-			var shasum = crypto.createHash('sha1'); shasum.update(config.salt); shasum.update(password);
+			var salt = server_settings.get('server-salt');
+			var shasum = crypto.createHash('sha1'); shasum.update(salt); shasum.update(password);
 			var d = shasum.digest('hex');
 
 			if (selected_user['hash'] == d)
@@ -245,38 +254,56 @@ function start()
 	//Start message
 	//-------------------------------
 	console.log("");
-	console.log("iLab Service");
+	console.log("iLab Broker Service");
 	console.log("Version: 1.0");
-	console.log("  Build: 5");
-	console.log("   Date: 21/1/2014");
+	console.log("  Build: 6");
+	console.log("   Date: 12/2/2014");
 	console.log("");
 
 	//Main broker port
-	var default_port = 8080;
+	/*var default_port = 8080;
 	var broker_port = server_settings.get('broker-port');
 	if (!broker_port)
 		broker_port = default_port;
 
-	console.log(broker_port);
+	broker_port = config.port;*/
+	console.log("Port: "+ config.port);
 
 	if (config.show_performance) elapsed_time("Setting up express");
 
+	//Salt setup
+	function createUUID()
+	{
+		var random_uuid = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g,
+		function(c) {var r = Math.random()*16|0,v=c=='x'?r:r&0x3|0x8;return v.toString(16);});
+		return random_uuid;
+	}
+
+	if (!server_settings.get('server-salt'))
+		server_settings.set('server-salt', createUUID());
+
+	if (!server_settings.get('server-secret'))
+		server_settings.set('server-secret', createUUID());
+
 	//Initilisation functions
 	//-------------------------------
-	var secret = 'Some secret thingo';//'''+crypto.randomBytes(64)+'';
+	var salt = server_settings.get('server-salt');
 	app.configure(function(){
-		app.set('port', broker_port);
+		app.set('port', config.port);
 
 		if (config.show_requests)
 		{
 			app.use(express.logger("dev"));
 		}
 
-		var cookieName = 'broker' + broker_port;
+		var cookieName = 'broker' + config.port;
 		app.use(express.cookieParser());
 		app.use(express.bodyParser());
-		app.use(require('session-middleware').middleware( secret, cookieName ));
+		//app.use(require('session-middleware').middleware( salt, cookieName ));
 		//app.use(express.session({ secret: secret }));
+		var cookieName = 'brokerCookies' + config.wrapper_port;
+	  	app.use(express.session({secret: salt, key: cookieName}));	
+
 		app.use(passport.initialize());
 		app.use(passport.session());
 		app.use(express.methodOverride());
@@ -300,7 +327,7 @@ function start()
 
 	//Load the admin UI
 	//-------------------------------
-	var shasum = crypto.createHash('sha1'); shasum.update(config.salt); shasum.update('password');
+	var shasum = crypto.createHash('sha1'); shasum.update(salt); shasum.update('password');
 	var d = shasum.digest('hex');
 		
 	if (!access_users.get('admin'))
@@ -328,12 +355,7 @@ function start()
 		server_settings.set('broker-port', default_port);
 
 	if (!server_settings.get('vendor-guid'))
-	{
-		var random_uuid = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g,
-		function(c) {var r = Math.random()*16|0,v=c=='x'?r:r&0x3|0x8;return v.toString(16);});
-
-		server_settings.set('vendor-guid', random_uuid);
-	}
+		server_settings.set('vendor-guid', createUUID());
 
 	adminui.create(app, root, passport, {'users': access_users, 'settings': server_settings, 'servers': servers_database, 'wrappers': wrapper_database});
 
@@ -403,14 +425,16 @@ function start()
 			case "updatePassword":
 				var old_password = json['old'];
 				var new_password = json['new'];
+
+				var salt = server_settings.get('server-salt');
 	
 				//Check that the old password matches the user
-				var shasum = crypto.createHash('sha1'); shasum.update(config.salt); shasum.update(old_password);
+				var shasum = crypto.createHash('sha1'); shasum.update(salt); shasum.update(old_password);
 				var d = shasum.digest('hex');
 				if (d == client.request.user.hash)
 				{
 					//Update the password file
-					shasum = crypto.createHash('sha1'); shasum.update(config.salt); shasum.update(new_password);
+					shasum = crypto.createHash('sha1'); shasum.update(salt); shasum.update(new_password);
 					d = shasum.digest('hex');
 
 					var user_settings = access_users.get(client.request.user.username);

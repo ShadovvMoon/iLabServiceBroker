@@ -1,7 +1,7 @@
 {
   "name": "ilab-broker",
   "version": "1.0.0",
-  "description": "a test project to create an ilab broker server",
+  "description": "A new version of the iLab service broker in nodejs and json",
   "dependencies": {
     "jade": "*",
     "express": "~3.1.0",

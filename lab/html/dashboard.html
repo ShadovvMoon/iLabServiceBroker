@@ -1,0 +1,86 @@
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="">
+    <meta name="author" content="">
+    <title>Lab Server - Dashboard</title>
+    <link href="css/bootstrap.css" rel="stylesheet">
+    <link href="css/sb-admin.css" rel="stylesheet">
+    <link rel="stylesheet" href="font-awesome/css/font-awesome.min.css">
+    <link rel="stylesheet" href="http://cdn.oesmith.co.uk/morris-0.4.3.min.css">
+  </head>
+
+  <body>
+    <div id="wrapper">
+      <nav class="navbar navbar-inverse navbar-fixed-top" role="navigation">
+        <div class="navbar-header">
+          <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-ex1-collapse">
+            <span class="sr-only">Toggle navigation</span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </button>
+          <a class="navbar-brand" href="/">Admin Panel</a>
+        </div>
+
+        <!-- Collect the nav links, forms, and other content for toggling -->
+        <div class="collapse navbar-collapse navbar-ex1-collapse">
+          <ul class="nav navbar-nav side-nav">
+            <li class="active"><a href="/"><i class="fa fa-edit"></i> About</a></li>
+            <li><a href="servers"><i class="fa fa-desktop"></i> Brokers</a></li>
+          </ul>
+          <ul class="nav navbar-nav navbar-right navbar-user">
+            <li class="dropdown user-dropdown">
+              <a href="#" class="dropdown-toggle" data-toggle="dropdown"><i class="fa fa-user"></i> Admin <b class="caret"></b></a>
+              <ul class="dropdown-menu">
+                <li><a href="/profile"><i class="fa fa-gear"></i> My Account</a></li>
+                <li class="divider"></li>
+                <li><a href="/logout"><i class="fa fa-power-off"></i> Log Out</a></li>
+              </ul>
+            </li>
+          </ul>
+        </div><!-- /.navbar-collapse -->
+      </nav>
+
+      <div id="page-wrapper">
+		<h1>Dashboard <small></small></h1>
+		<div class="alert alert-dismissable alert-warning" id="page-message-box" style="display:none;">
+          <button type="button" class="close" data-dismiss="alert">×</button>
+          <h4 id="page-message-box-h4"></h4>
+          <p  id="page-message-box-p"></p>
+        </div>
+		<div class="row">
+          <div class="col-lg-12">
+            <form role="form" action="/dashboard" method="post">
+              <div class="form-group">
+                <label>Name</label>
+                <input class="form-control" id="vendor-name" name="name"  value="<%= database_module.lab_name() %>">
+              </div>
+		      
+			  <div class="form-group">
+                <label>GUID</label>
+                <input class="form-control" id="vendor-guid" name="guid" value="<%= database_module.lab_guid() %>">
+              </div>
+		
+			  <div align="right">
+			  <button type="submit" class="btn btn-primary">Save</button>
+			  </div>
+			</form>
+			</div>
+		</div>
+      </div><!-- /#page-wrapper -->
+    </div><!-- /#wrapper -->
+
+    <!-- JavaScript -->
+    <script src="js/jquery-1.10.2.js"></script>
+    <script src="js/bootstrap.js"></script>
+
+    <!-- Page Specific Plugins -->
+    <script src="//cdnjs.cloudflare.com/ajax/libs/raphael/2.1.0/raphael-min.js"></script>
+    <script src="http://cdn.oesmith.co.uk/morris-0.4.3.min.js"></script>
+    <script src="js/morris/chart-data-morris.js"></script>
+    <script src="js/tablesorter/jquery.tablesorter.js"></script>
+    <script src="js/tablesorter/tables.js"></script>
+  <body>
+</html>

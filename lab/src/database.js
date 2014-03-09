@@ -44,14 +44,14 @@ db_module.flush = function(callback)
 	var lab_guid = settings_database.get('guid');
 	if (!lab_guid)
 	{
-		var guid = require('crypto').randomBytes(16).toString('hex');
+		var guid = require('crypto').randomBytes(32).toString('hex');
 		settings_dictionary['guid'] = guid;
 		settings_database.set('guid', guid);
 	}
 	else settings_dictionary['guid'] = lab_guid;
 	
 	//Load the server secret from the database
-	var lab_secret = settings_database.get('guid');
+	var lab_secret = settings_database.get('salt');
 	if (!lab_secret)
 	{
 		var salt = require('crypto').randomBytes(48).toString('hex');
@@ -101,6 +101,11 @@ db_module.test_module = function()
 
 //Broker database
 var broker_database  = database_store('brokers');
+db_module.broker_database = function()
+{
+	return broker_database;
+};
+
 db_module.getBrokers = function(callback)
 {
 	var brokers = [];
@@ -109,9 +114,17 @@ db_module.getBrokers = function(callback)
 	{
 		var guid = guids[i];
 		var broker_info = broker_database.get(guid);
+		broker_info['guid'] = guid;
 		brokers.push(broker_info);
 	}
-	callback(brokers);
+	if (typeof callback !== 'undefined')
+		callback(brokers);
+	return brokers;
+}
+
+db_module.getBroker = function(broker_id)
+{
+	return broker_database.get(broker_id);
 }
 
 //User database

@@ -12,6 +12,7 @@ For more info and more free Bootstrap 3 HTML themes, visit http://startbootstrap
 
 body {
   margin-top: 50px;
+  background-color: #FFFFFF;
 }
 
 #wrapper {
@@ -98,19 +99,6 @@ table.tablesorter thead tr th:hover {
 
   /* Side Nav */
 
-  .side-nav {
-	margin-left: -225px;
-	left: 225px;
-	width: 225px;
-	position: fixed;
-	top: 50px;
-	height: 100%;
-	border-radius: 0;
-	border: none;
-	background-color: #222222;
-	overflow-y: auto;
-  }
-
   /* Bootstrap Default Overrides - Customized Dropdowns for the Side Nav */
 
   .side-nav>li.dropdown>ul.dropdown-menu {
@@ -134,7 +122,7 @@ table.tablesorter thead tr th:hover {
   .side-nav>li.dropdown>ul.dropdown-menu>li>a.active,
   .side-nav>li.dropdown>ul.dropdown-menu>li>a:focus {
 	color: #fff;
-	background-color: #080808;
+	background-color: #EEEEEE;
   }
 
   .side-nav>li>a {
@@ -143,7 +131,7 @@ table.tablesorter thead tr th:hover {
 
   .navbar-inverse .navbar-nav>li>a:hover,
   .navbar-inverse .navbar-nav>li>a:focus {
-	background-color: #080808;
+	background-color: #CCCCCC;
   }
 
   /* Nav Messages */

@@ -1,0 +1,75 @@
+body {
+	margin-top: 50px; /* 50px is the height of the navbar - change this if the navbarn height changes */
+}
+
+.container {
+max-width:800px;
+}
+
+table
+{
+	font-size:12px;
+}
+
+.header-image {
+	background-position: top;
+	height: auto;
+	display: block;
+	width: 100%;
+	text-align: center;
+}
+
+.headline {
+	padding: 120px 0;
+}
+
+.headline > .container > h1 {
+	font-size: 80px;
+	background: #ffffff;
+	background: rgba(255, 255, 255, 0.9);
+}
+
+.headline > .container > h2 {
+	font-size: 77px;
+	background: #ffffff;
+	background: rgba(255, 255, 255, 0.9);
+}
+
+.featurette-divider {
+	margin: 80px 0;
+}
+.featurette {
+	overflow: hidden; 
+}
+
+.featurette-image.pull-left {
+	margin-right: 40px;
+}
+.featurette-image.pull-right {
+	margin-left: 40px;
+}
+
+.featurette-heading {
+	font-size: 50px;
+}
+
+footer {
+	margin: 50px 0;
+}
+
+
+/* RESPONSIVE CSS */
+@media 
+{
+
+.headline > .container > h1 {font-size: 60px; }
+.headline > .container > h2 {font-size: 20px; }
+.container > h3 {font-size: 20px; color:#AAAAAA;  font-family: 'HelveticaNeue-Light', 'Helvetica Neue Light', 'Helvetica Neue', Arial, Helvetica, sans-serif; font-weight: 100; letter-spacing: 1px;}
+h4 {font-size: 20px; color:#555555;  font-family: 'HelveticaNeue-Light', 'Helvetica Neue Light', 'Helvetica Neue', Arial, Helvetica, sans-serif; font-weight: 100; letter-spacing: 1px;}
+h5 {font-size: 15px; color:#555555;  font-family: 'HelveticaNeue-Light', 'Helvetica Neue Light', 'Helvetica Neue', Arial, Helvetica, sans-serif; font-weight: 100; letter-spacing: 1px;}
+.featurette-divider {margin: 50px 0;}
+.featurette-image.pull-left {margin-right: 20px;}
+.featurette-image.pull-right {margin-left: 20px;}
+.featurette-heading {font-size: 20px;}
+
+}

@@ -31,11 +31,20 @@ var crypto 	 = require('crypto');
 var ejs 	 = require('ejs');
 var fs 		 = require('fs');
 
-root_module.renderEJS = function(req,res,source_html)
+root_module.renderEJS = function(req,res,source_html, page_options)
 {
-	var compiled = ejs.compile(source_html);
-	var html = compiled({ admin_module:root_module, database_module: database });
- 	res.send(html);
+	try
+	{
+		page_options = (typeof page_options !== 'undefined') ? page_options : {};
+		var compiled = ejs.compile(source_html);
+		var html = compiled({ admin_module:root_module, database_module: database, page_options: page_options});
+	 	res.send(html);
+	}
+	catch(err)
+  	{
+	 	console.log(err.toString());
+		res.redirect("/");
+  	}
 }
 
 root_module.setupExpress = function (app)
@@ -69,7 +78,6 @@ root_module.setupExpress = function (app)
 					var salt = database.lab_salt();
 					var shasum = crypto.createHash('sha1'); shasum.update(salt); shasum.update(password);
 					var d = shasum.digest('hex');
-					console.log(d);
 					if (selected_user['hash'] == d)
 						return done(null, {id:selected_user['id'] , username:username, hash:d});
 					else
@@ -139,7 +147,7 @@ root_module.setupExpress = function (app)
 	});
 
 	//Logout of your current account
-	app.get('/logout', function (req, res)
+	app.get('/logoff', function (req, res)
 	{
 		req.logout();
 		res.redirect("/login");
@@ -174,6 +182,79 @@ root_module.setupExpress = function (app)
 			database.settings_database().set('name', new_name);
 			database.settings_database().set('guid', new_guid);
 			return database.flush(function(){res.redirect('/dashboard');});
+		}
+		else return res.redirect('/login');
+	});
+
+	//Show the brokers page
+	app.get('/brokers', function(req,res)
+	{
+		if (req.user)
+		{
+			fs.readFile('html/brokers.html','utf-8',function (err, html_data)
+			{
+				return root_module.renderEJS(req,res,html_data);
+			});
+		}
+		else return res.redirect('/login');
+	});
+
+	app.get('/edit_broker', function(req,res)
+	{
+		if (req.user)
+		{
+			fs.readFile('html/edit_broker.html','utf-8',function (err, html_data)
+			{
+				return root_module.renderEJS(req,res,html_data, req.query);
+			});
+		}
+		else return res.redirect('/login');
+	});
+
+	app.get('/delete_broker', function(req,res)
+	{
+		if (req.user)
+		{
+			var broker_id = req.query.id;
+			console.log("Deleting broker with GUID " + broker_id);
+			database.broker_database().remove(broker_id);
+			return database.flush(function(res)
+			{
+				return function(){res.redirect('/brokers');}
+			}(res));
+		}
+		else return res.redirect('/login');
+	});
+
+	app.post('/edit_broker', function(req,res)
+	{
+		if (req.user)
+		{
+			var form_post = req.body;
+			var new_name  = form_post['name'];
+			var new_guid  = form_post['guid'];
+			var new_key   = form_post['passkey'];
+			var old_id    = form_post['old_identifier'];
+
+			if (database.broker_database().list().indexOf(new_guid) != -1 && new_guid != old_id)
+			{
+				//Broker already exists.
+				fs.readFile('html/edit_broker.html','utf-8',function (err, html_data)
+				{
+					root_module.renderEJS(req,res,html_data, req.query);
+				});
+			}
+			else
+			{
+				if (old_id && old_id != '')
+					database.broker_database().remove(old_id);
+
+				database.broker_database().set(new_guid, {name:new_name, key:new_key});
+				return database.flush(function(res)
+				{
+					return function(){res.redirect('/brokers');}
+				}(res));
+			}
 		}
 		else return res.redirect('/login');
 	});

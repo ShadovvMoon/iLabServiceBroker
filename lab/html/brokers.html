@@ -3,12 +3,11 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="">
-    <meta name="author" content="">
-    <title>Lab Server - Dashboard</title>
+    <meta name="author" content="Samuel Colbran">
+    <title>Lab Server - Brokers</title>
     <link href="css/bootstrap.css" rel="stylesheet">
     <link href="css/one-page-wonder.css" rel="stylesheet">
   </head>
-
   <body>
       <nav class="navbar-inverse navbar-static-top" role="navigation" style="width:100%">
 		<div class="container" style="margin-top:-50px;">
@@ -23,8 +22,8 @@
 	        </div>
 	        <div class="collapse navbar-collapse navbar-ex1-collapse">
 	          <ul class="nav navbar-nav">
-	            <li class="active"><a href="dashboard"><span class="glyphicon glyphicon-home"></span> Dashboard</a></li>
-	            <li><a href="brokers"><span class="glyphicon glyphicon-cloud"></span> Brokers</a></li>
+	            <li><a href="dashboard"><span class="glyphicon glyphicon-home"></span> Dashboard</a></li>
+	            <li class="active"><a href="brokers"><span class="glyphicon glyphicon-cloud"></span> Brokers</a></li>
 	          </ul>
 			  <ul class="nav navbar-nav navbar-right navbar-user">
 	            <li class="dropdown user-dropdown">
@@ -43,59 +42,64 @@
 		</div>
     </nav>
 
-    <form role="form" action="/dashboard" method="post">
-    <div class="container">
-	    <div id="page-wrapper">
+	<div class="container" >
+	      <div id="page-wrapper">
 			<table style="width:100%">
 				<tr>
-					<td valign="bottom">
-						<h1>Dashboard</h1>
-					</td>
+					<td valign="bottom"><h1></h1></td>
 					<td align="right" valign="middle">
-						<a href="/dashboard" class="btn btn-danger" style="top:8px;position:relative;">
-							Revert
-						</a>
-						<button type="submit" class="btn btn-primary" style="top:8px;position:relative;">
-							<i class="fa fa-save"></i> &nbsp;Save
-						</button>
+						
 					</td>
 				</tr>
 			</table>
-
-			<table style="width:100%">
-				<tr>
-					<td>
-			              <div class="form-group">
-			                <label>Name</label>
-			                <input class="form-control" id="vendor-name" name="name"  value="<%= database_module.lab_name() %>">
-			              </div>
-					</td>
-				</tr>
-			</table>
-			<table style="width:100%">
-				<tr>
-					<td>
-						  <div class="form-group">
-			                <label>GUID</label>
-			                <input class="form-control" id="vendor-guid" name="guid" value="<%= database_module.lab_guid() %>">
-			              </div>
-					</td>
-					<td align="right" valign="middle" style="width:90px">
-						<button type="button" class="btn btn-default" style="top:5px;position:relative;" onClick="generateRandom('vendor-guid')">
-							Generate
-						</button>
-					</td>
-				</tr>
-			</table>
-     	 </div><!-- /#page-wrapper -->
-      </div><!-- /#page-wrapper -->
-	</form>
+			<div class="row">
+	          	<div class="col-lg-12">
+					<div class="table-responsive" style="display:block;" id="wrapper-global-table">
+						<div align="left">
+							
+						</div>
+						<br/>
+						<table class="table table-hover">
+							<thead>
+								<tr>
+									<th class="header headerSortUp">Name</th>
+									<th class="header">Identifier</th>
+									<th class="header">Key</th>
+									<th class="header">
+										<div align="center">
+											<a href="edit_broker">
+												<span class="glyphicon glyphicon-plus"></span>
+											</a>
+										</div>
+									</th>
+								</tr>
+							</thead>
+							<tbody id="wrappers-table">
+							<%  var broker_settings = database_module.getBrokers();
+								for (var i=0; i < broker_settings.length; i++)
+								{
+									var setting = broker_settings[i];
+									var broker_name = setting['name'];
+									var broker_guid = setting['guid'];
+									var broker_key  = setting['key'];
+									var broker_edit = "edit_broker?id="+broker_guid;
+							%>
+							<tr>
+								<td><%= broker_name %></td>
+								<td><%= broker_guid %></td>
+								<td><%= broker_key %></td>
+								<td><a href="<%= broker_edit %>">Edit</a></td>
+							</tr>
+							<%}%>
+							</tbody>
+						</table>
+					</div>
+				</div>
+			</div>
+	</div><!-- /#wrapper -->
 
     <!-- JavaScript -->
     <script src="js/jquery-1.10.2.js"></script>
     <script src="js/bootstrap.js"></script>
-
-    <!-- Page Specific Plugins -->
-    <script src="js/functions.js"></script>
   <body>
 </html>

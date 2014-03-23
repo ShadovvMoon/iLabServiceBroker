@@ -24,30 +24,66 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-var fs 		= require('fs');
+var fs  = require('fs');
+var ejs = require('ejs');
 (function () {
     var root = module.exports;
+	function renderEJS(req,res,source_html, page_options)
+	{
+		try
+		{
+			page_options = (typeof page_options !== 'undefined') ? page_options : {};
+			var compiled = ejs.compile(source_html);
+			var html = compiled({page_options: page_options});
+		 	res.send(html);
+		}
+		catch(err)
+	  	{
+		 	console.log(err.toString());
+			res.redirect("/");
+	  	}
+	}
+
 	function setupPlugin(core, settings)
 	{
 		var app = core.app;
 		var plugin_port = app.get('port');
 
-		app.get('/noauth', function (req, res)
+		app.get('/quantum', function (req, res)
 		{
 	 		//Read the blackboard plugin html
-			fs.readFile('plugins/blackboard/html/index.html',function (err, html_data)
+			fs.readFile('plugins/quantum/html/experiment.html','utf-8', function(req,res){ return function (err, html_data)
 			{
 				if (err)
 					console.log(err);
-	
-				res.writeHead(200, { 'Content-Type': 'text/html'});
-				res.write('<html><head>');		
-				res.write(core.javascriptToken("test"));	
-				res.write(html_data);
-				res.write('</body></html>');
-				res.end();
-			});
+
+				var user_id = "unknown";
+				renderEJS(req,res,html_data,{token:core.tokenDictionary(user_id)});
+			}}(req,res));
 	 	});
+
+		app.post('/quantum-submit', function (req, res)
+		{
+			var post_params = req.body;
+			if (core.isAuthenticated(req.body))
+			{
+				var token_uid = post_params['token_uid'];
+				var xvalue = post_params['x_value'];
+
+				console.log("Submitting experiment");
+				var submit_data = {action:'submit', id:"Modern iLab test", experimentSpecification:"<experimentSpecification><xvalues>"+ xvalue +"</xvalues></experimentSpecification>"};
+				console.log(JSON.stringify(submit_data));
+				core.sendActionToServer(submit_data, function(err, data) {
+					if (err)
+						console.log(err);
+					console.log(JSON.stringify(data));
+				});
+			}
+			else
+			{
+				console.log("Nothing sent to server");
+			}
+		});
 	}
 	root.setupPlugin = setupPlugin;
 })();

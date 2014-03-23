@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, Samuel Colbran <contact@samuco.net>
+ * Copyright (c) 2014, Samuel Colbran <contact@samuco.net>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without modification,
@@ -24,30 +24,8 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-var fs 		= require('fs');
-(function () {
-    var root = module.exports;
-	function setupPlugin(core, settings)
-	{
-		var app = core.app;
-		var plugin_port = app.get('port');
-
-		app.get('/noauth', function (req, res)
-		{
-	 		//Read the blackboard plugin html
-			fs.readFile('plugins/blackboard/html/index.html',function (err, html_data)
-			{
-				if (err)
-					console.log(err);
-	
-				res.writeHead(200, { 'Content-Type': 'text/html'});
-				res.write('<html><head>');		
-				res.write(core.javascriptToken("test"));	
-				res.write(html_data);
-				res.write('</body></html>');
-				res.end();
-			});
-	 	});
-	}
-	root.setupPlugin = setupPlugin;
-})();
+var defines = module.exports;
+defines.idle_status = 0;
+defines.running_status = 1;
+defines.starting_status = 2;
+defines.finishing_status = 3; 

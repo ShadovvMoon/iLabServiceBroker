@@ -60,7 +60,7 @@ db_module.flush = function(callback)
 	}
 	else settings_dictionary['salt'] = lab_secret;
 	
-	//Call the callback			
+	//Load the experiment queue		
 	callback();
 }
 
@@ -155,4 +155,72 @@ db_module.createUser = function(user_id, user_data)
 db_module.getUser = function(user_id, callback)
 {
 	user_database.get(user_id, callback);
+}
+
+//Experiment database
+var experiment_database = database_store('experiment');
+var experiment_queue    = [];
+var next_experiment_id  = 0;
+
+db_module.loadQueue = function(callback)
+{
+	next_experiment_id = settings_database.get('next_experiment_id');
+	next_experiment_id = (typeof next_experiment_id !== 'undefined') ? next_experiment_id : 0;
+
+	experiment_queue = experiment_database.get('experiment_queue');
+	experiment_queue = (typeof experiment_queue !== 'undefined') ? experiment_queue : [];
+
+	callback(experiment_queue);
+	return experiment_queue;
+}
+
+db_module.addResult = function(experimentId, results, callback)
+{	
+	experiment_database.set(experimentId, {results: results}, callback);
+}
+
+db_module.saveQueue = function(callback)
+{
+	experiment_database.set('experiment_queue', experiment_queue, callback);
+}
+
+db_module.getQueue = function()
+{	
+	return experiment_queue;
+}
+
+db_module.shiftQueue = function(callback)
+{	
+	experiment_queue.shift(0);
+	db_module.saveQueue(callback);
+}
+
+db_module.addToQueue = function(experiment_data, callback)
+{	
+	experiment_queue.push(experiment_data);
+	db_module.saveQueue(callback);
+}
+
+db_module.createExperiment = function(experiment_data, callback)
+{
+	var vReport      = experiment_data['vReport'];
+	var eSpec        = experiment_data['experimentSpecification'];
+	var experimentId = next_experiment_id;
+
+	//Add the experiment id to the dictionary
+	experiment_data['experimentId'] = experimentId;
+
+	//Increment the next id
+	next_experiment_id++;
+	settings_database.set('next_experiment_id', next_experiment_id);
+
+	//Add the experiment to the queue
+	var returnedData = {vReport:vReport, minTimeToLive:"0", experimentId:experimentId, wait:{effectiveQueueLength: String(experiment_queue.length), estWait: String(0)}};
+
+	db_module.addToQueue(experiment_data,function(returnedData){return function(){callback(returnedData)}}(returnedData));
+}
+
+db_module.experiment_database = function()
+{
+	return experiment_database;
 }

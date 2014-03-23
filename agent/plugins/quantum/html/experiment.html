@@ -1,0 +1,44 @@
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="">
+    <meta name="author" content="Samuel Colbran">
+    <title>Quantum Test Page</title>
+    <link href="public/stylesheets/bootstrap.css" rel="stylesheet">
+    <link href="public/stylesheets/one-page-wonder.css" rel="stylesheet">
+    <link rel="stylesheet" href="http://cdn.oesmith.co.uk/morris-0.4.3.min.css">
+  </head>
+  <body>
+	<div class="header">
+      <div class="container">
+		<a href="http://www.uq.edu.au/"><img src="http://uq.edu.au/templates/web/images/masthead-logo.gif"/></a>
+		<a href="http://drupal.smp.uq.edu.au/"><img src="http://www.smp.uq.edu.au/images/newheader.gif"/></a>
+      </div>
+    </div>
+	<br/>
+	<div class="container">
+		<h1>Quantum Entanglement</h1>
+        <p>An experiment that demonstrates ...</p>
+		<hr/>
+		<div class="row">
+			<div class="col-lg-12">
+				<% var hash = page_options.token.hash; var uid = page_options.token.uid; %>
+				<form role="form" action="/quantum-submit" method="post">
+					<input type="hidden" name="token" value="<%=hash%>">
+					<input type="hidden" name="uid" value="<%=uid%>">
+					<div class="form-group">
+						<label>X Values</label>
+						<input class="form-control" name="x_value">
+					</div>
+					<div align="right">
+						<button type="submit" class="btn btn-primary">Run Experiment</button>
+					</div>
+				</form>
+			</div>
+		</div>
+	</div>
+    <script src="public/javascripts/jquery-1.10.2.js"></script>
+    <script src="public/javascripts/bootstrap.js"></script>
+  </body>
+</html>

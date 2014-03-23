@@ -24,11 +24,13 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-var crypto   = require('crypto');
-var express  = require('express');
-var broker   = require('./broker');
-var database = require('./database');
-var admin    = require('./admin');
+var crypto     = require('crypto');
+var express    = require('express');
+var broker     = require('./broker');
+var database   = require('./database');
+var admin      = require('./admin');
+var queue      = require('./queue');
+var experiment = require('./experiment');
 
 XMLHttpRequest = require("xmlhttprequest").XMLHttpRequest;
 module.exports.createLab = (function (app,callback)
@@ -72,11 +74,18 @@ module.exports.createLab = (function (app,callback)
 				//Setup the administrator page
 				admin.setupExpress(app);
 
-				//Create the html server
-				require("http").createServer(app).listen(lab_port, function()
+				//Setup the actual experiment
+				experiment.setupExpress(app);
+
+				//Start the experiment queue
+				queue.startQueue(function()
 				{
-					console.log("Running on port " + app.get('port'));
-					console.log("");
+					//Create the html server
+					require("http").createServer(app).listen(app.get('port'), function()
+					{
+						console.log("Running on port " + app.get('port'));
+						console.log("");
+					});
 				});
 			}
 		

@@ -11,6 +11,8 @@
     "pkginfo":"*",
     "request":"*",
     "xmlhttprequest":"*",
+    "underscore":"*",
+    "xml2js":"*",
    },
   "author": {
     "name": "Samuel Colbran",

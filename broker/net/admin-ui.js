@@ -315,7 +315,8 @@ function create(app, server, passport, storage)
 					id: id,
 					host: hst,
 					service: service,
-					key: passkey});
+					key: passkey,
+					type:0});
 				}
 				else
 				{
@@ -327,7 +328,64 @@ function create(app, server, passport, storage)
 						id: id,
 						host: hst,
 						service: service,
-						key: passkey});
+						key: passkey,
+						type:0});
+					}
+					else
+					{
+						//Doesn't exist.
+						console.log("Modified server doesnt exist " + old_id);
+					}
+				}	
+
+				//Force a server update
+				server.flushServers();
+			}
+			render_admin_page('admin/servers', req, res);
+		});
+
+		app.post('/delete-modern-server', function(req, res)
+		{
+			if (req.user)
+			{
+				var old_id = req.body['hidden-identifier'];
+				servers.remove(old_id);
+			}
+
+			render_admin_page('admin/servers', req, res);
+		});
+
+		//Saving modern
+		app.post('/save-servers-modern', function(req, res)
+		{
+			if (req.user)
+			{
+				var old_id = req.body['hidden-modern-identifier'];
+				var id = req.body['identifier'];
+				var hst = req.body['host'];
+				var passkey = req.body['passkey'];
+
+				//Does a server with old-id exist?
+				if (old_id == "")
+				{
+					//Create a new server
+					servers.set(id, {
+					id: id,
+					host: hst,
+					key: passkey,
+					type:1});
+				}
+				else
+				{
+					var old_serv = servers.get(old_id);
+					if (old_serv)
+					{
+						servers.remove(old_id);
+						servers.set(id, {
+						id: id,
+						host: hst,
+						key: passkey,
+						type:1});
 					}
 					else
 					{

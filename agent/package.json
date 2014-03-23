@@ -9,7 +9,8 @@
     "passport-facebook" : "*",
     "request" : "*",
     "pkginfo" : "*",
-    "xmlhttprequest" : "*"
+    "xmlhttprequest" : "*",
+    "ejs" : "*"
   },
   "author": {
     "name": "Samuel Colbran",

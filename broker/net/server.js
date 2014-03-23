@@ -30,6 +30,7 @@ var crypto 			 = require('crypto')
 var adminui 		 = require("./admin-ui");
 var soap 			 = require("./soap");
 var ilab 			 = require("./ilab");
+var ilab_modern 	 = require("./ilab_modern");
 var experiment_store = require("./data.js");
 var config 			 = require('../config')
 var express 		 = require('express');
@@ -156,6 +157,8 @@ function loadServer(server_number, ordered, nextServer)
 	var server_data = servers_database.get(servers_database.list()[server_number]);
 	var port_number = 80;
 	var host_name	= server_data['host'];
+	var server_type	= server_data['type'];
+	server_type = (typeof server_type !== 'undefined')? server_type:0;
 
 	var n = server_data['host'].split(":");
 	if (n.length == 2)
@@ -164,17 +167,56 @@ function loadServer(server_number, ordered, nextServer)
 		port_number = n[1];
 	}
 	
-	//Convert the server_data into a nicer format
-	var params = {host: host_name,
-				  port: port_number,
-					id: server_data['id'],
-
-			   service: server_data['service'],
-			   passkey: server_data['key'],
-				  guid: server_settings.get('vendor-guid')};
-
-	var lab_server = new ilab.iLabServer(params, function()
+	if (server_type == 0) //Legacy
 	{
+		//Convert the server_data into a nicer format
+		var params = {host: host_name,
+					  port: port_number,
+						id: server_data['id'],
+	
+				   service: server_data['service'],
+				   passkey: server_data['key'],
+					  guid: server_settings.get('vendor-guid')};
+	
+		var lab_server = new ilab.iLabServer(params, function()
+		{
+			//Wrap the return function
+			var responseFunction = (function(server)
+			{
+	         	return function(xml, err)
+		 		{
+			  	 	if (err)
+					{
+						error_list[server.id] = err;
+						console.log("ERROR: " + server.id + ", " + err);
+					}
+					else
+					{
+						lab_list[server.id] = lab_server;
+						console.log("Status " + JSON.stringify(xml));
+					}
+		
+					if (ordered)
+					{
+						server_number++; //Scope won't matter if servers are ordered.
+						nextServer();
+					}
+	           	};
+	      	})(server_data);
+			lab_server.getLabStatus(responseFunction);
+		});
+	}
+	else if (server_type == 1) //Modern
+	{
+		//Convert the server_data into a nicer format
+		var params = {host: host_name,
+					  port: port_number,
+						id: server_data['id'],
+				   passkey: server_data['key'],
+					  guid: server_settings.get('vendor-guid')};
+	
+		var lab_server = new ilab_modern.iLabServer(params);
+		
 		//Wrap the return function
 		var responseFunction = (function(server)
 		{
@@ -199,7 +241,8 @@ function loadServer(server_number, ordered, nextServer)
            	};
       	})(server_data);
 		lab_server.getLabStatus(responseFunction);
-	});
+
+	}	
 }
 
 function flushServers()

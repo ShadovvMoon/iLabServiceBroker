@@ -150,7 +150,6 @@ var config = require('../../config');
 						 response:res,
 							 json:req.body,
 							 type:'json'};
-
 			if (isAuthenticated(req.body,server))
 				server.receiveDataFromClient(client,req.body['uid']);
 			else

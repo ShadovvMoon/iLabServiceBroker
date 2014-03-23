@@ -208,12 +208,19 @@ module.exports.createWrapper = (function (app,host,port,callback)
 			if (config.verbose) console.log("Missing request");
 			return false;
 		}	
+		root.isAuthenticated = isAuthenticated;
 		function javascriptToken(uid)
 		{
 			var computedSignature = hmacsha1(secret, uid);
 			var JS_Script = '<script type="text/javascript">var token_string = {u:"'+uid+'",t:"'+computedSignature+'"};var agent_host = "' + config.wrapper_host + '";var agent_port = "' + config.wrapper_port + '";</script>';
 			return JS_Script;
 		}	
+		function tokenDictionary(uid)
+		{
+			var computedSignature = hmacsha1(secret, uid);
+			return {uid:uid,hash:computedSignature};
+		}	
+		root.tokenDictionary = tokenDictionary;
 		root.javascriptToken = javascriptToken;
 		function startMessage()
 		{

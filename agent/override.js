@@ -25,6 +25,22 @@
  */
 
 //This file provides an easy way to modify the behavior of commands.
+function experimentCompleted(core, labID, experimentID)
+{
+	//Request the experiment results from the service broker
+	core.sendActionToServer({id: labID, 
+						 action:'retrieveResult',
+				   experimentID: experimentID }, 
+	function(obj, err) {	
+		if (err){
+			console.log(err);
+		} else {
+			console.log("experiment results");
+			console.log(JSON.stringify(obj));
+		}
+	});
+}
+
 function receiveDataFromClient(core, client)
 {
 	//Reject any experiments that take longer than 2 minutes.
@@ -64,4 +80,7 @@ function receiveDataFromClient(core, client)
 	//Pass through
 	core.receiveDataFromClient(client);
 }
+
+//Do not modify below this line.
 module.exports.receiveDataFromClient = receiveDataFromClient;
+module.exports.experimentCompleted = experimentCompleted;

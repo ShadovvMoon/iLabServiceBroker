@@ -9,7 +9,10 @@
     "passport-facebook" : "*",
     "request" : "*",
     "pkginfo" : "*",
-    "xmlhttprequest" : "*"
+    "ejs" : "*",
+    "portscanner" : "*",
+    "xhr2": "*",
+	"express-domain-middleware":"*"
   },
   "author": {
     "name": "Samuel Colbran",

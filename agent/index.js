@@ -25,13 +25,12 @@
  */
 
 var express = require('express');
-var  config = require("./config");
 var     app = express();
 
 //Read the HTML Page into memory
 app.configure(function()
 {
-	require('./core').createWrapper(app,config.broker_host,config.broker_port, function(agent)
+	require('./core').createAgent(app, function(agent)
 	{
 		
 	});

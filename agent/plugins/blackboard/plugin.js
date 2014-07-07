@@ -35,7 +35,7 @@ var passport= require("passport");
 
 (function () {
     var root = module.exports;
-	function setupPlugin(core, settings)
+	root.setupPlugin = function(core, database)
 	{
 		var app = core.app;
 		var plugin_port = app.get('port');
@@ -55,9 +55,9 @@ var passport= require("passport");
 		});
 		
 		var appList = {};
-		appList[settings.consumer_key] = 
+		appList[database.get("key")] = 
 		{
-			secret: settings.shared_secret
+			secret: database.get("secret")
 		}
 		
 		function findApp(key, next)
@@ -113,6 +113,22 @@ var passport= require("passport");
 				res.end();
 		 	});
 		});
-	}
-	root.setupPlugin = setupPlugin;
+	};
+	root.setupGUI = function(terminal, database, callback) {
+		console.log("Blackboard connection - version 1.0");
+		terminal.question("Consumer key: ", function(key){
+			terminal.question("Shared secret: ", function(secret){
+				//Store the options in the database.
+				database.set("key", key);
+				database.set("secret", secret);
+
+				//Show a little info message
+				console.log("You can change the embedded HTML interface by modifying");
+				console.log("/plugins/blackboard/html/index.html");
+
+				//Finish the setup
+				callback();
+			});
+		});
+	};
 })();

@@ -35,7 +35,7 @@ var fs 		= require('fs');
 		app.get('/noauth', function (req, res)
 		{
 	 		//Read the blackboard plugin html
-			fs.readFile('plugins/facebook/html/index.html',function (err, html_data)
+			fs.readFile('plugins/blackboard/html/index.html',function (err, html_data)
 			{
 				if (err)
 					console.log(err);

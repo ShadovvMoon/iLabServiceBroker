@@ -34,14 +34,15 @@ var passport= require("passport");
 var FacebookStrategy = require('passport-facebook').Strategy;
 
 var Store = require('ministore')('database');
-var facebook_users 	 = Store('users');
+var facebook_users 	 = Store('facebook_users');
 (function () {
     var root = module.exports;
-	function setupPlugin(core, settings)
+	function setupPlugin(core, database)
 	{
 		var app = core.app;
 		var plugin_port = app.get('port');
-
+		var callbackURL = "http://"+core.agent_host+":"+ core.agent_port+"/facebook";
+	
 		passport.serializeUser(function(user, done)
 		{
 		  	done(null, user);
@@ -53,9 +54,9 @@ var facebook_users 	 = Store('users');
 		});
 
 		passport.use(new FacebookStrategy ({
-		    	clientID: settings.clientID,
-		    	clientSecret: settings.clientSecret,
-		    	callbackURL: settings.callbackURL},
+		    	clientID: database.get("clientID"),
+		    	clientSecret: database.get("clientSecret"),
+		    	callbackURL: callbackURL},
 
 		  	function(accessToken, refreshToken, profile, done)
 		  	{
@@ -108,4 +109,21 @@ var facebook_users 	 = Store('users');
 		});
 	}
 	root.setupPlugin = setupPlugin;
+	root.setupGUI = function(terminal, database, callback) {
+		console.log("Facebook authentication - version 1.0");
+		terminal.question("clientID: ", function(key){
+			terminal.question("clientSecret: ", function(secret){
+				//Store the options in the database.
+				database.set("clientID", key);
+				database.set("clientSecret", secret);
+
+				//Show a little info message
+				console.log("You can change the embedded HTML interface by modifying");
+				console.log("/plugins/blackboard/html/index.html");
+
+				//Finish the setup
+				callback();
+			});
+		});
+	};
 })();

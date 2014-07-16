@@ -1,48 +1,26 @@
-iLabServiceBroker
+iLab node.js
 =================
 
-iLab ServiceBroker achitecture using nodejs
-Developed by Sam Colbran
+The node.js implementation of the iLab Shared Architecture has split into separate GitHub repositories. This repository remains as a redirection to the new ones.
 
-Tools required:
-nodejs
+All of the servers are written in node.js, making them platform independent and very lightweight. The service broker is compatible with both the original MIT batched lab servers and with the new node.js lab servers. This implementation of the iLab Shared Architecture is the only one that can accept customised authentication schemes such as LTI. If you want to embed iLabs directly and seamlessly into your learning management system, the node.js implementation is for you. 
 
-##Broker
-The new service broker provides a different service from the original MIT broker. All student interaction, such as authentication and client software, has been moved into a separate service. The purpose of the new service broker is to bridge communication between json and SOAP (for legacy lab servers).
-The most basic broker converts json requests into SOAP and then sends it directly to the lab server. Additional caching or other logic may be incorporated.
-The service broker provides a global administration to control access to lab servers. This is useful when you have several agents with different permissions.
+Not to mention it's free, compatible with existing labs and incredibly easy to setup and use! 
 
-####Installation
-```
-cd <path to broker directory>
-npm install
-node index.js
-```
+###[Service Broker](https://github.com/ShadovvMoon/Broker)
 
-Open a web browser and navigate to http://localhost:8080. Login with the username and password admin and password respectively. Click the Admin drop down menu in the upper right hand corner and then select My Account. Enter password as the old password, then type in a new password and click Save.
+*A service broker for each institution.*
 
+The service broker provides a global administration to control access to lab servers for an institution. This is useful when you have several [agents](https://github.com/ShadovvMoon/Agent) with different permissions.
 
+###[Lab Server](https://github.com/ShadovvMoon/Lab)
 
-##Agent
-An agent is designed to provide a way of ‘modifying broker behaviour’ without making any changes to the broker source code. This is useful for access control and keeping the system stable. 
-All actions supported by the broker are also supported by the agent. The most basic agent acts as a wrapper for commands (simply passing commands through to the broker). A more advanced agent could introduce logic inside commands or other authentication systems.
+*A lab server for each piece of laboratory equipment.*
 
-####Installation
-```
-cd <path to agent directory>
-npm install
-node index.js
-```
+The lab server provides an easy and secure way to put your laboratory equipment online. 
 
-####Settings
-To successfully start the agent you will need to complete the required fields shown below in the config.js file:
-```
-config.broker_host   = 'localhost';
-config.broker_port   = 8080;
+###[Agent](https://github.com/ShadovvMoon/Agent)
 
-//Agent info
-config.wrapper_uid   = '';
-config.wrapper_key   = '';
-```
+*An agent for each course.*
 
-The wrapper_uid and wrapper_key correspond to the GUID and Passkey in the broker admin panel. These do not need to follow any set format (a random string of any length is suitable). ASCII characters are required.
+Agents are lightweight servers that easily allow experiments to be seamlessly embedded in a variety of systems such as edX, Blackboard, Moodle etc. 

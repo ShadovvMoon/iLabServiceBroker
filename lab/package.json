@@ -1,6 +1,6 @@
 {
   "name": "ilab-lab",
-  "version": "1.0.0",
+  "version": "1.0.2",
   "description": "A new version of the iLab lab server written in nodejs and json",
   "dependencies": {
     "ejs": "*",
@@ -10,7 +10,12 @@
     "passport-local" : "*",
     "pkginfo":"*",
     "request":"*",
-    "xmlhttprequest":"*",
+    "xhr2":"*",
+    "underscore":"*",
+    "xml2js":"*",
+    "sandcastle":"*",
+    "portscanner":"*",
+    "readline":"*"
    },
   "author": {
     "name": "Samuel Colbran",

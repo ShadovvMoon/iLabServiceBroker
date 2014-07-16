@@ -1,0 +1,291 @@
+<%- include title.ejs %>
+Scheduler
+</title>
+<link href='./fullcalendar/fullcalendar.css' rel='stylesheet' />
+<link href='./fullcalendar/fullcalendar.print.css' rel='stylesheet' media='print' />
+<script src='./fullcalendar/lib/moment.min.js'></script>
+<script src='./fullcalendar/lib/jquery.min.js'></script>
+<script src='./fullcalendar/lib/jquery-ui.custom.min.js'></script>
+<script src='./fullcalendar/fullcalendar.min.js'></script>
+<script src="./js/bootstrap.js"></script>
+<script>
+	var previousEventClick = undefined;
+	function savePage()
+	{	
+		$('#calendar').fullCalendar('removeEvents', document.getElementById('eventId').value);
+		var calendarEvents = $('#calendar').fullCalendar('clientEvents');
+		//Remove the 'source' element to allow JSON stringification
+		var i;
+		for (i=0; i < calendarEvents.length; i++)
+		{
+			delete calendarEvents[i]['source'];
+		}
+		document.getElementById("calendarData").value=JSON.stringify(calendarEvents);
+		document.getElementById("saveForm").submit();
+	}
+
+	function deleteReservation()
+	{
+		$('#calendar').fullCalendar('removeEvents', document.getElementById('eventId').value);
+		previousEventClick = undefined;
+		document.getElementById('eventId').value = "";
+	}
+
+	var guid = (function() {
+	  function s4() {
+	    return Math.floor((1 + Math.random()) * 0x10000)
+	               .toString(16)
+	               .substring(1);
+	  }
+	  return function() {
+	    return s4() + s4() + '-' + s4() + '-' + s4() + '-' +
+	           s4() + '-' + s4() + s4() + s4();
+	  };
+	})();
+
+	function createReservation()
+	{
+		var createSelection = document.getElementById("createBroker");
+		var typeSelection   = document.getElementById("createType");
+		var selectedBroker  = createSelection.options[createSelection.selectedIndex].text;
+		var selectedType    = typeSelection  .options[typeSelection  .selectedIndex].text;
+
+		var start = document.getElementById('createFrom').value;
+		var end   = document.getElementById('createTo')  .value;
+		var allDay = document.getElementById("allDay").checked;
+
+		if (!allDay)
+		{
+		
+		}
+
+		var eventData;
+		console.log(selectedBroker);
+		if (selectedBroker) {
+			var existingEvent = document.getElementById('eventId').value;
+			if (existingEvent != "")
+			{
+				start = previousEventClick.start;
+				end = previousEventClick.end;
+				deleteReservation();
+			}
+
+			eventData = {
+				title: selectedBroker,
+				start: start,
+				accessType: selectedType,
+				end: end,
+				allDay: allDay,
+				id: guid()
+			};
+
+			if (selectedType == "Interactive") {
+				//eventData.title = "[i] " + eventData.title;
+				eventData.color = "rgb(95, 183, 96)";
+			} else if (selectedType == "Batched") {
+				//eventData.title = "[b] " + eventData.title;
+				eventData.color = "rgb(70, 140, 200)";
+			}
+
+			$('#calendar').fullCalendar('renderEvent', eventData, true); // stick? = false
+		}
+		$('#calendar').fullCalendar('unselect');
+	}
+
+	$(document).ready(function() {
+		$('#calendar').fullCalendar({
+			header: {
+				left: 'prev,next today',
+				center: 'title',
+				right: 'month,agendaWeek,agendaDay'
+			},
+<%
+var timezone = database.valueForKey("settings", "timezone");
+if (timezone)
+{
+%>
+			timezone: "<%=timezone%>",
+<%
+}
+%>
+			selectable: true,
+			selectHelper: true,
+			select: function(start, end) {
+
+				document.getElementById("createTitle").innerHTML = "Create Reservation";
+				document.getElementById("saveEvent").innerHTML = "<span class=\"glyphicon glyphicon-plus\"></span> Create";
+				document.getElementById("deleteEvent").style.display = "none";
+				document.getElementById('eventId').value = "";
+				document.getElementById('createFrom').value = start;
+				document.getElementById('createTo').value = end;
+	
+				$('#myModal').modal('show');
+				
+				/*var title = prompt('Event Title:');
+				var eventData;
+				if (title) {
+					eventData = {
+						title: title,
+						start: start,
+						end: end
+					};
+					$('#calendar').fullCalendar('renderEvent', eventData, true); // stick? = true
+				}
+				$('#calendar').fullCalendar('unselect');*/
+			},
+			eventClick: function(event){
+				document.getElementById("createTitle").innerHTML = "Edit Reservation";
+				document.getElementById("saveEvent").innerHTML = "<span class=\"glyphicon glyphicon-ok\"></span> Save";
+				document.getElementById("deleteEvent").style.display = "inline";
+				document.getElementById('eventId').value = event._id;
+
+				var createSelection = document.getElementById("createBroker");
+				var typeSelection   = document.getElementById("createType");
+
+				for (var i = 0; i < createSelection.options.length; i++) {
+				    if (createSelection.options[i].text === event.title) {
+				        createSelection.selectedIndex = i;
+				        break;
+				    }
+				}
+		
+				for (var i = 0; i < typeSelection.options.length; i++) {
+				    if (typeSelection.options[i].text === event.accessType) {
+				        typeSelection.selectedIndex = i;
+				        break;
+				    }
+				}
+
+				previousEventClick = event;
+				$('#myModal').modal('show');
+			},
+			editable: true,
+<%
+var calendarEvents = database.valueForKey("calendar", "schedule");
+var calendarString = JSON.stringify(calendarEvents);
+%>
+			events: <%- calendarString %>
+		});
+	});
+	setTimeout("jQuery('#calendar').fullCalendar( 'render' );",200);
+</script>
+<style>
+	body {
+		margin: 0;
+		padding: 0;
+		font-family: "Lucida Grande",Helvetica,Arial,Verdana,sans-serif;
+		font-size: 14px;
+	}
+
+	#calendar {
+		width: 100%;
+		margin: 0px auto;
+	}
+</style>
+<%- include menu.ejs %>
+<body>
+<table style="width:100%">
+	<tr>
+		<td valign="bottom">
+			<h4>Access Schedule</h4>
+			Select days to create reservations.
+		</td>
+		<td align="right" valign="middle">
+			<button type="submit" class="btn btn-danger" data-toggle="modal" data-target="#revertModal">
+				<span class="glyphicon glyphicon-remove"></span> Revert
+			</button>
+			<button type="button" class="btn btn-primary" onClick="savePage()">
+				<span class="glyphicon glyphicon-ok"></span> Save Changes
+			</button>
+		</td>
+	</tr>
+</table>
+<hr/>
+	<form role="form" action="/schedule" method="post" id="saveForm">
+	<input type="hidden" id="calendarData" name="events"/>
+	</form>
+
+	<!-- Modal -->
+	<div class="modal fade" id="revertModal" tabindex="-1" role="dialog" aria-labelledby="revertModalLabel" aria-hidden="true">
+	  <div class="modal-dialog modal-sm" style="max-width:300px">
+	    <div class="modal-content">
+	      <div class="modal-body" align="center">
+			<p>Are you sure you want to revert to the previous calendar?</p>
+			<button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+        	<a href="/schedule" class="btn btn-danger"><span class="glyphicon glyphicon-remove"></span> Revert</a>
+	      </div>
+	    </div>
+	  </div>
+	</div>
+
+	<!-- Modal -->
+	<div class="modal" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+	  <div class="modal-dialog modal-sm" style="max-width:300px">
+	    <div class="modal-content">
+	      <div class="modal-body">
+			<h4 id="createTitle">Create Reservation</h4>
+			<hr/>
+			<div class="form-group">
+				<label class="sr" for="exampleInputEmail2">Service Broker</label>
+				<select class="form-control" id="createBroker">
+	
+			<% 
+			var broker_settings = database.getKeys("brokers");
+			for (var i=0; i < broker_settings.length; i++)
+			{
+				var setting = database.valueForKey("brokers", broker_settings[i]);
+				var broker_name = setting['name'];
+		
+				%><option><%=broker_name%></option><%
+			}
+			%>
+
+				</select>
+			</div>
+			<div class="hidden">
+				<label class="sr" for="exampleInputEmail2">From</label>
+				<input class="form-control" id="createFrom"/>
+				<label class="sr" for="exampleInputEmail2">To</label>
+				<input class="form-control" id="createTo"/>
+				<label class="sr" for="exampleInputEmail2">Event</label>
+				<input class="form-control" id="eventId"/>
+			</div>
+			<div class="form-group">
+				<label class="sr" for="exampleInputEmail2">Reservation Type</label>
+				<table style="width:100%">
+					<tr>
+						<td valign="bottom" width="160px">
+							<select class="form-control" id="createType">
+								<option>Batched</option>
+								<!--<option>Interactive</option>-->
+							</select>
+						</td>
+						<td width="20px"></td>
+						<td>
+							<div class="checkbox">
+								<label>
+							  		<input type="checkbox" checked="true" id="allDay"> All Day
+								</label>
+							</div>
+						</td>
+					</tr>
+				</table>
+			</div>
+			<hr/>
+			<div align="right">
+				<button id="deleteEvent" style="display:none" type="button" class="btn btn-danger" onClick="deleteReservation()" data-dismiss="modal">
+					<span class="glyphicon glyphicon-remove"></span> Delete
+				</button>
+				<button id="saveEvent" type="button" class="btn btn-primary" onClick="createReservation()" data-dismiss="modal">
+				</button>
+			</div>
+	
+	      </div>
+	    </div>
+	  </div>
+	</div>
+
+	<!-- Calendar -->
+	<div id='calendar'></div>
+</body>
+</html>

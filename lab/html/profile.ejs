@@ -1,0 +1,42 @@
+<%- include title.ejs %>
+Lab - My Profile
+<%- include header.ejs %>
+<h4>My Profile</h4>
+<hr>
+
+<% 
+var s = page_options.success;
+var e = page_options.e;
+
+var successful = null;
+if (typeof s !== 'undefined')
+{
+	if (s == "1") successful = true;
+	else successful = false;
+}
+
+%>
+<% if (successful) { %>
+<div class="alert alert-success" role="alert">Password changed successfully!</div>
+<% } else if (successful != null) { %>
+<div class="alert alert-danger" role="alert"><%=e%></div>
+<% } %>
+<form role="form" action="/profile" method="post">
+	<div class="form-group">
+	<label>Old password</label>
+	<input type="password" class="form-control" id="old-password" name="old">
+</div>
+<div class="form-group" id="new-group">
+	<label>New password</label>
+	<input type="password"  class="form-control" id="new-password" name="new">
+</div>
+<div class="form-group" id="verify-group">
+	<label>Verify password</label>
+	<input type="password"  class="form-control" id="verify-password" name="verify">
+</div>
+<div align="right">
+	<button type="submit" class="btn btn-primary">Save</button>
+</div>
+</form>
+
+<%- include footer.ejs %>

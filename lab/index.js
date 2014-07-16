@@ -30,7 +30,7 @@ var     app = express();
 //Read the HTML Page into memory
 app.configure(function()
 {
-	require('./src/core').createLab(app, function(agent)
+	require('./core/core').createLab(app, function(agent)
 	{
 		
 	});

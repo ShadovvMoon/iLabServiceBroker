@@ -1,0 +1,113 @@
+    <meta name="generator" content="Bootply" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <link href="http://netdna.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css" rel="stylesheet">
+    <link href="./css/admin.css" rel="stylesheet">
+</head>
+<body>
+
+<!-- Header -->
+<div id="top-nav" class="navbar navbar-inverse navbar-static-top">
+    <div class="container">
+        <div class="navbar-header">
+            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+                <span class="icon-toggle"></span>
+            </button>
+            <a class="navbar-brand" href="/">Lab Server</a>
+        </div>
+        <div class="navbar-collapse collapse">
+            <ul class="nav navbar-nav navbar-right">
+                <li class="dropdown">
+                    <a class="dropdown-toggle" role="button" data-toggle="dropdown" href="#"><i class="glyphicon glyphicon-user"></i> Admin <span class="caret"></span></a>
+                    <ul id="g-account-menu" class="dropdown-menu" role="menu">
+                        <li><a href="/profile">My Profile</a></li>
+                    </ul>
+                </li>
+                <li><a href="/logoff"><i class="glyphicon glyphicon-lock"></i> Logout</a></li>
+            </ul>
+        </div>
+    </div><!-- /container -->
+</div><!-- /Header -->
+
+<style>
+/* Side notes for calling out things
+-------------------------------------------------- */
+ 
+.bs-callout {
+    padding: 20px;
+    margin: 20px 0;
+    border: 1px solid #eee;
+    border-left-width: 5px;
+    border-radius: 3px
+}
+
+.bs-callout h4 {
+    margin-top: 0;
+    margin-bottom: 5px
+}
+
+.bs-callout p:last-child {
+    margin-bottom: 0
+}
+
+.bs-callout code {
+    border-radius: 3px
+}
+
+.bs-callout+.bs-callout {
+    margin-top: -5px
+}
+
+.bs-callout-danger {
+    border-left-color: #d9534f
+}
+
+.bs-callout-danger h4 {
+    color: #d9534f
+}
+
+.bs-callout-warning {
+    border-left-color: #f0ad4e
+}
+
+.bs-callout-warning h4 {
+    color: #f0ad4e
+}
+
+
+.bs-callout-success {
+    border-left-color: #5cb85c
+}
+
+.bs-callout-success h4 {
+    color: #5cb85c
+}
+
+.bs-callout-info {
+    border-left-color: #5bc0de
+}
+
+.bs-callout-info h4 {
+    color: #5bc0de
+}
+</style>
+
+<!-- Main -->
+<div class="container">
+    <div class="row">
+        <div class="col-md-3">
+            <ul class="list-unstyled">
+                <li class="nav-header"><a href="#" data-toggle="collapse" data-target="#userMenu">
+                    <h5>Settings</h5>
+                </a>
+                    <ul class="list-unstyled collapse in" id="userMenu">
+                        <li><a href="/"><span class="glyphicon glyphicon-edit"></span> General</a></li>
+                        <li><a href="brokers"><span class="glyphicon glyphicon-cloud"></span> Brokers</a></li>
+						<li><a href="queue"><span class="glyphicon glyphicon-th-list"></span> Queue</a></li>
+						<li><a href="schedule"><span class="glyphicon glyphicon-calendar"></span> Schedule</a></li>
+                    </ul>
+                </li>
+            </ul>
+        </div><!-- /col-3 -->
+
+        <!-- Page title -->
+        <div class="col-md-9">

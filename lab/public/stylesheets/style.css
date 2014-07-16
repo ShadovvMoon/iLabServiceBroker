@@ -1,4 +1,0 @@
-#wrap { width:500px; margin:0 auto; border:3px solid red; }
-#header { background-color:yellow; font-size:50px; text-align:center; }
-#body { overflow:auto; }
-#sidebar { float:left; width:150px; background-color:#ccc; min-height:400px; }

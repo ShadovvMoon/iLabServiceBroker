@@ -1,0 +1,28 @@
+<%- include title.ejs %>
+Service Broker - My Profile
+<%- include header.ejs %>
+<h4>My Profile</h4>
+<hr>
+
+<% 
+
+%>
+<form role="form" action="/save-password" method="post">
+	<div class="form-group">
+	<label>Old password</label>
+	<input type="password" class="form-control" id="old-password" name="old">
+</div>
+<div class="form-group" id="new-group">
+	<label>New password</label>
+	<input type="password"  class="form-control" id="new-password" name="new">
+</div>
+<div class="form-group" id="verify-group">
+	<label>Verify password</label>
+	<input type="password"  class="form-control" id="verify-password" name="verify">
+</div>
+<div align="right">
+	<a type="button" href="#" onclick="checkPassword()" class="btn btn-primary">Save</a>
+</div>
+</form>
+
+<%- include footer.ejs %>

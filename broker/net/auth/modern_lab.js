@@ -27,11 +27,13 @@
 var sys = require('sys');
 var utils 	= require('../../node_modules_modified/passport-http-2legged-oauth/lib/utils.js');
 var config = require('../../config');
+var database = require('../database');
 
 (function () {
     var root = module.exports;
 	function isAuthenticated(req, server)
 	{
+		var verbose_authentication = true;
 		if (req)
 		{
 			var current_time = new Date().getTime(); //in ms
@@ -44,21 +46,20 @@ var config = require('../../config');
 
 			if (uid && token)
 			{
-				var wrapper_database = server.wrappers;
-				var wraps = wrapper_database.list();
+				var servers = database.getKeys('servers');
 
 				var found_id = null;
-				for (var i = 0; i < wraps.length; i++)
+				for (var i = 0; i < servers.length; i++)
 				{	
-					if (wrapper_database.get(wraps[i])['guid'] == uid)
+					if (database.valueForKey("servers", servers[i])['guid'] == uid)
 					{
-						found_id = wraps[i];
+						found_id = servers[i];
 						break;
 					}
 				}	
 				if (found_id)
 				{
-					var key = wrapper_database.get(found_id)['key'];
+					var key = database.valueForKey("servers", found_id)['key'];
 					if (key)
 					{
 						var dictionaryAttribute = JSON.stringify(req);
@@ -67,92 +68,56 @@ var config = require('../../config');
 						{
 							if (current_time-time_stamp < 10000 && current_time-time_stamp >= 0) //Needs to be less than ten seconds.
 							{
-								//Do we have permission for the action?
-								var actions = wrapper_database.get(found_id)['function'];
-								var servers = wrapper_database.get(found_id)['server'];
-	
-								var requested_action = req['action'];
-
-								//Are we allowed to perform this action?
-								if (actions[requested_action] != null)
-								{
-									if (actions[requested_action] == 1)
-									{
-										//Do we have permission for the lab?
-										var requested_server = req['id'];
-										if (requested_server != null)
-										{
-											if (servers[requested_server] != null)
-											{
-												if (servers[requested_server] == 1)
-												{
-													if (config.verbose) console.log("Authentication successful");
-													return true; //All good
-												}
-												else
-												{
-													if (config.verbose) console.log("Authentication failed - server disabled " + requested_server );
-												}
-											}
-											else
-											{
-												return false; //False unless otherwise specified
-											}
-										}
-										else
-										{
-											return true; //Command doesnt use an id
-										}
-									}
-								}
-								else
-								{
-									return true; //True unless otherwise specified
-								}
+								if (verbose_authentication) console.log("Authentication successful 1");
+								return true; //All good
 							}
 							else
 							{
-								if (config.verbose) console.log("Authentication failed - timeout (" + (current_time-time_stamp)/1000 + ")");
+								if (verbose_authentication) console.log("Authentication failed - timeout (" + (current_time-time_stamp)/1000 + ")");
 							}
 						}	
 						else
 						{
-							if (config.verbose) console.log("Authentication failed - invalid signature");
+							if (verbose_authentication) console.log("Authentication failed - invalid signature");
 						}
 					}
+					else
+					{
+						if (verbose_authentication) console.log("Authentication failed - missing key");
+					}
+				}
+				else
+				{
+					if (verbose_authentication) console.log("Authentication failed - unknown id " +  uid);
 				}
 			}
+			else
+			{
+				if (verbose_authentication) console.log("Authentication failed - missing uid or token");
+			}
 		}
+		else
+		{
+			if (verbose_authentication) console.log("Authentication failed - missing request");
+		}
+		//if (verbose_authentication) console.log("Authentication failed ?");
 		return false;
 	}
 
 	var access_denied_error = "Access denied. The service broker admin has disabled your access to this feature.";
 	function createAuth(app, server)
 	{
-		//Listener for JSONP
-		app.get('/wrapper-jsonp', function(req, res)
-		{
-			var client = {request:req,
-						 response:res,
-							 json:req.query,
-							 type:'jsonp'};
-
-			if (isAuthenticated(req.query,server))
-				server.receiveDataFromClient(client,req.query['uid']);
-			else
-				server.sendReplyToClient(client, {error: access_denied_error});
-		});
-	
 		//Listener for JSON
-		app.post('/wrapper-json', function(req, res)
+		app.post('/lab-json', function(req, res)
 		{	
 			var client = {request:req,
 						 response:res,
 							 json:req.body,
 							 type:'json'};
-
 			if (isAuthenticated(req.body,server))
-				server.receiveDataFromClient(client,req.body['uid']);
+			{
+				server.receiveDataFromLabServer(client, req.body['uid']);
+			}
 			else
 				server.sendReplyToClient(client, {error: access_denied_error});
 		});

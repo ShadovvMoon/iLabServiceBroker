@@ -1,6 +1,6 @@
 {
   "name": "ilab-broker",
-  "version": "1.0.0",
+  "version": "1.0.3",
   "description": "A new version of the iLab service broker in nodejs and json",
   "dependencies": {
     "jade": "*",
@@ -13,7 +13,8 @@
     "underscore":"*",
     "xml2js":"*",
     "xmldoc":"*",
-    "xmlhttprequest":"*"
+    "xhr2":"*",
+    "ejs":"*"
   },
   "author": {
     "name": "Samuel Colbran",

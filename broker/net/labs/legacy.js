@@ -24,20 +24,37 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+server = require('./../server');
 (function()
 {
     var root = module.exports;
-	var soap   = require('./soap');
-	var config = require('../config')
+	var soap   = require('../soap');
+	var config = require('../../config')
 	var parseString = require('xml2js').parseString;
 
 	//Print out the accepted SOAP methods
-	function iLabServer(params, callback)
+	function iLabServer(params, logStream, callback)
 	{
-		//Connect to the iLab
-		if (config.verbose) console.log("Connecting to iLab " + params.host);
-		if (config.debug) console.log(params.host + '/'+params.service);
+		//Fix the parameters
+		var n = params.host.split(":");
+		if (n.length == 2)
+		{
+			params.host = n[0];
+			params.port = n[1];
+		}
+		else
+			params.port = 80;
 
+        this.stream = logStream;
+        this.stream.write("Connecting to Legacy iLab " + params.host + " " + params.port + "\n");
+        this.stream.write(params.host + '/'+params.service + "\n");
+
+		//Connect to the iLab
+		if (config.verbose)
+        {
+            console.log("Connecting to Legacy iLab " + params.host + " " + params.port);
+            console.log(params.host + '/'+params.service);
+        }
 		//Connect to the SOAP
 		var soap_connection = soap.createConnection(
 						params.host, //Host name
@@ -45,29 +62,43 @@
 						'/'+params.service,
 						'/'+params.service+'?wsdl', //Wsdl file
 						params.guid,
-						params.passkey); 
-	
+						params.key,
+                        this.stream);
+
+		this.params = params;
+        this.host = params.host;
+        this.soap_connection = soap_connection;
+
 		//Create the functions to handle replies
+        this.stream.write("SOAP: Connecting (" + params.host+")" + "\n");
 		console.log("SOAP: Connecting (" + params.host+")");
-	
-		soap_connection.once('initialized', function()
-		{
-			console.log("SOAP: Connected  (" + params.host+")");
-		   	callback();
-		});
-	
+		soap_connection.once('initialized', function(lab_server, callback) {
+            return function()
+            {
+                lab_server.stream.write("SOAP: Connected  (" + params.host+")" + "\n");
+                console.log("SOAP: Connected  (" + params.host+")");
+                callback(lab_server);
+            };
+        }(this, callback));
 		soap_connection.init();
+	}
 
-		this.host = params.host;
-		this.soap_connection = soap_connection;
-
-		return this;
+	iLabServer.prototype.guid = function()
+	{
+		return this.params.guid;
 	}
 
 	iLabServer.prototype.printMethods = function (){
 		console.log("LAB: " + this.soap_connection.getAllFunctions());
 	}
 	
+	//Registers the broker with the lab
+	//Arguments: function(message, keys, err)
+	iLabServer.prototype.registerBroker = function (host, port, callback)
+	{
+		console.log("This lab server does not support registrations");
+	}
+
 	//Returns the queue length for the lab server. 
 	//Arguments: userGroup, priority (from -20 to 20), function(length, wait, err)
 	iLabServer.prototype.getEffectiveQueueLength = function (userGroup, priorityHint, callback) {
@@ -107,6 +138,7 @@
 		if (config.verbose) console.log("LAB: GetLabStatus");
 		this.soap_connection.once('GetLabStatus', function(err, data, header)
 		{
+			if (config.verbose) console.log("LAB: Finished " + data);
 			callback(data, data['faultstring']);
 	    });
 	    this.soap_connection.call
@@ -172,7 +204,8 @@
 
 	//Submits an experiment specification to the lab server for execution.
 	//Arguments: experimentID, experimentSpecification, userGroup, priorityHint, function(obj, err)
-	iLabServer.prototype.submit = function (experimentID, experimentSpecification, userGroup, priorityHint, callback) {
+	iLabServer.prototype.submit = function (experimentID, experimentJSON, userGroup, priorityHint, callback) {
+		var experimentSpecification = experimentJSON['experimentSpecification'];
 		if (config.verbose) console.log("LAB: Submit");
 		this.soap_connection.once('Submit', function(err, data, header)
 		{
@@ -199,7 +232,8 @@
 
 	//Checks whether an experiment specification would be accepted if submitted for execution. 
 	//Arguments: experimentSpecification, userGroup, function(obj, err)
-	iLabServer.prototype.validate = function (experimentSpecification, userGroup, callback) {
+	iLabServer.prototype.validate = function (experimentJSON, userGroup, callback) {
+		var experimentSpecification = experimentJSON['experimentSpecification'];
 		this.soap_connection.once('Validate', function(err, data, header)
 		{
 			callback(data, data['faultstring']);

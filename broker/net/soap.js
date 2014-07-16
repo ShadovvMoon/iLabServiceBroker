@@ -30,7 +30,7 @@ var config = require('../config')
 module.exports = (function ()
 {
     var root = Object.create({});
-	function createConnection(host_url, host_port, soap_path, wsdl_path, guid, passkey)
+	function createConnection(host_url, host_port, soap_path, wsdl_path, guid, passkey, writeStream)
 	{
 		//Setup the client parameters
 		var clientParams = {
@@ -40,6 +40,8 @@ module.exports = (function ()
 		    path    : soap_path,
 		    wsdl    : wsdl_path,
 			port	: host_port,
+
+            writeStream: writeStream,
 	
 		    //Soap header
 		   	header  : [{
@@ -53,14 +55,15 @@ module.exports = (function ()
 		var clientOptions = {
 		    secure : true/false //is https or http
 		};
-	
+
+        if (typeof writeStream !== 'undefined') writeStream.write(host_url+ wsdl_path+"\n");
 		if (config.debug) console.log(host_url+ wsdl_path)
 	
 		//Create the new soap client
 		var SoapClient = new easy_soap.Client(clientParams, clientOptions);
 	
 		SoapClient.on('error', function(error) {
-		    console.log("SOAP: " + error + ' (' + clientParams.host + ')');
+		    console.log("SOAP: " + error + ' (' + clientParams.host + clientParams.path + ')');
 		});
 		
 		return SoapClient;

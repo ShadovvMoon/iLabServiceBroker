@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, Samuel Colbran <contact@samuco.net>
+ * Copyright (c) 2014, Samuel Colbran <contact@samuco.net>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without modification,
@@ -24,46 +24,18 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+var defines = module.exports;
 
-var config = {}
-module.exports = config;
-config.auth_plugins = [];
-//-----------------------------
-config.host = "localhost";
-config.port = 10000;
+//States
+defines.idle_status = 0;
+defines.running_status = 1;
+defines.starting_status = 2;
+defines.finishing_status = 3; 
 
-//Authentication plugins
-
-config.auth_plugins.push({
-	name:			"noauth",
-	file:			"noauth.js"
-});
-config.auth_plugins.push({
-	name:			"admin",
-	file:			"admin.js"
-});
-config.auth_plugins.push({
-	name:			"wrapper",
-	file:			"wrapper.js"
-});
-config.auth_plugins.push({
-	name:			"modern_lab",
-	file:			"modern_lab.js"
-});
-
-
-//verbose
-//Output console debug messages
-config.verbose 			= true;
-
-//Spam console with all details
-config.debug 			= false;
-
-//Show express requests
-config.show_requests 	= false;
-
-//Load the servers in order (instead of all at once)
-config.flush_ordered 	= false;
-
-//Show time statistics
-config.show_performance = false;
+//Developer
+defines._developer_mode = true; 
+defines.debug = function(message)
+{
+	if (defines._developer_mode)
+		console.log(message);
+}

@@ -7,20 +7,32 @@ All of the servers are written in node.js, making them platform independent and 
 
 Not to mention it's free, compatible with existing labs and incredibly easy to setup and use! 
 
-###[Service Broker](https://github.com/ShadovvMoon/Broker)
+###[1. Service Broker](https://github.com/ShadovvMoon/Broker)
 
 *A service broker for each institution.*
 
 The service broker provides a global administration to control access to lab servers for an institution. This is useful when you have several [agents](https://github.com/ShadovvMoon/Agent) with different permissions.
 
-###[Lab Server](https://github.com/ShadovvMoon/Lab)
+[Latest release - v1.0.3](https://github.com/ShadovvMoon/Broker/releases/tag/v1.0.3)
+
+###[2. Lab Server](https://github.com/ShadovvMoon/Lab)
 
 *A lab server for each piece of laboratory equipment.*
 
 The lab server provides an easy and secure way to put your laboratory equipment online. 
 
-###[Agent](https://github.com/ShadovvMoon/Agent)
+[Latest release - v1.0.3](https://github.com/ShadovvMoon/Lab/releases/tag/v1.0.3)
+
+###[3. Agent](https://github.com/ShadovvMoon/Agent)
 
 *An agent for each course.*
 
 Agents are lightweight servers that easily allow experiments to be seamlessly embedded in a variety of systems such as edX, Blackboard, Moodle etc. 
+
+[Latest release - v1.0.3](https://github.com/ShadovvMoon/Agent/releases/tag/v1.0.3)
+
+####3.3 Plugins
+
+No additional plugins are available yet.
+
+

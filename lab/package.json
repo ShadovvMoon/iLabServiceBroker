@@ -10,12 +10,18 @@
     "passport-local" : "*",
     "pkginfo":"*",
     "request":"*",
+<<<<<<< HEAD
     "xhr2":"*",
     "underscore":"*",
     "xml2js":"*",
     "sandcastle":"*",
     "portscanner":"*",
     "readline":"*"
+=======
+    "xmlhttprequest":"*",
+    "underscore":"*",
+    "xml2js":"*",
+>>>>>>> FETCH_HEAD
    },
   "author": {
     "name": "Samuel Colbran",

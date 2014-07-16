@@ -224,9 +224,14 @@ function humanReadableStatus(error)
 						 response:res,
 							 json:req.body,
 							 type:'json'};
+<<<<<<< HEAD
 			var authenticated = isAuthenticated(req.body,server);
 			if (authenticated == kAuthSuccessful)
 				return server.receiveDataFromClient(client,req.body['uid']);
+=======
+			if (isAuthenticated(req.body,server))
+				server.receiveDataFromClient(client,req.body['uid']);
+>>>>>>> FETCH_HEAD
 			else
 				return server.sendReplyToClient(client, {error: humanReadableStatus(authenticated), code: authenticated});
 		});

@@ -533,7 +533,35 @@ module.exports.createAgent = (function (app, callback) {
 					i--;
 				}
 			}
+<<<<<<< HEAD
 			return files;
+=======
+			if (config.verbose) console.log("Missing request");
+			return false;
+		}	
+		root.isAuthenticated = isAuthenticated;
+		function javascriptToken(uid)
+		{
+			var computedSignature = hmacsha1(secret, uid);
+			var JS_Script = '<script type="text/javascript">var token_string = {u:"'+uid+'",t:"'+computedSignature+'"};var agent_host = "' + config.wrapper_host + '";var agent_port = "' + config.wrapper_port + '";</script>';
+			return JS_Script;
+		}	
+		function tokenDictionary(uid)
+		{
+			var computedSignature = hmacsha1(secret, uid);
+			return {uid:uid,hash:computedSignature};
+		}	
+		root.tokenDictionary = tokenDictionary;
+		root.javascriptToken = javascriptToken;
+		function startMessage()
+		{
+			console.log("");
+			console.log("iLab agent");
+			console.log("Version: 1.0");
+			console.log("  Build: 3");
+			console.log("   Date: 12/2/2014");
+			console.log("");
+>>>>>>> FETCH_HEAD
 		}
 
         function setupAllowedPlugins() {

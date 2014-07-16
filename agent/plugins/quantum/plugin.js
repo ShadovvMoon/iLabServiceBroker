@@ -33,8 +33,11 @@ var ejs = require('ejs');
 		try
 		{
 			page_options = (typeof page_options !== 'undefined') ? page_options : {};
+<<<<<<< HEAD
 			for (var attrname in req.query) { page_options[attrname] = req.query[attrname]; }
 
+=======
+>>>>>>> FETCH_HEAD
 			var compiled = ejs.compile(source_html);
 			var html = compiled({page_options: page_options});
 		 	res.send(html);
@@ -46,6 +49,7 @@ var ejs = require('ejs');
 	  	}
 	}
 
+<<<<<<< HEAD
 	function submitSpecification(req,res, spec_type)
 	{
 		var core = root._coreModule;
@@ -105,6 +109,10 @@ var ejs = require('ejs');
 	function setupPlugin(core, settings)
 	{
 		root._coreModule = core;
+=======
+	function setupPlugin(core, settings)
+	{
+>>>>>>> FETCH_HEAD
 		var app = core.app;
 		var plugin_port = app.get('port');
 
@@ -121,6 +129,7 @@ var ejs = require('ejs');
 			}}(req,res));
 	 	});
 
+<<<<<<< HEAD
 		app.post('/quantum-submit-soap', function (req, res)
 		{
 			submitSpecification(req,res, "xml");
@@ -132,6 +141,29 @@ var ejs = require('ejs');
 		app.post('/quantum-submit-js', function (req, res)
 		{
 			submitSpecification(req,res, "js");
+=======
+		app.post('/quantum-submit', function (req, res)
+		{
+			var post_params = req.body;
+			if (core.isAuthenticated(req.body))
+			{
+				var token_uid = post_params['token_uid'];
+				var xvalue = post_params['x_value'];
+
+				console.log("Submitting experiment");
+				var submit_data = {action:'submit', id:"Modern iLab test", experimentSpecification:"<experimentSpecification><xvalues>"+ xvalue +"</xvalues></experimentSpecification>"};
+				console.log(JSON.stringify(submit_data));
+				core.sendActionToServer(submit_data, function(err, data) {
+					if (err)
+						console.log(err);
+					console.log(JSON.stringify(data));
+				});
+			}
+			else
+			{
+				console.log("Nothing sent to server");
+			}
+>>>>>>> FETCH_HEAD
 		});
 	}
 	root.setupPlugin = setupPlugin;
